@@ -1,0 +1,23 @@
+
+Emulator for MARS
+
+MARS_RoT can be instantiated with "hardware" (hw) crypto primitives,
+a Primary Seed, and PCR bank size. See client.py (and README_DEMO)
+for example usage.
+
+DEPENDENCIES:
+pip install pycryptodome
+
+Crypto support are in the hw_<mod>.py files, and can be summarized with:
+
+NAME.py  | HASH       | SKDF          | AKDF | SIGN
+========================================================
+hw_ascon | Ascon Hash | AEAD Tag      | -    | AEAD Tag
+---------+------------+---------------+------+----------
+hw_she   | AES-MP     | 800-108 lite  | -    | CMAC
+---------+------------+---------------+------+----------
+hw_simon | Simon-MP   | 800-108 lite  | -    | CMAC
+---------+------------+---------------+------+----------
+hw_full  | SHA-256    | DRBG          | ECC  | ECDSA
+
+MP = Miyaguchi-Preneel compression algorithm
