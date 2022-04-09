@@ -10,7 +10,12 @@ from Crypto.PublicKey import ECC
 from Crypto.Signature import DSS
 import random
 
-hashalg = 0xB  # TPM_ALG_SHA256
+len_digest = 32
+len_sign = 16
+len_skey = 16
+len_akey = 32
+alg_hash = 0xB  # TPM_ALG_SHA256
+
 drbg_init = random.seed
 
 def drbg(n):
@@ -83,4 +88,4 @@ if __name__ == '__main__':
     sig = CryptSign(prv, h)
     print('sig =', sig.hex())
 
-    CryptVerify(pub, dig, sig)
+    print('Verify', CryptVerify(pub, dig, sig))

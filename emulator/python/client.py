@@ -11,16 +11,20 @@ import mars
 import cbor2 as cbor   # from https://travis-ci.com/agronholm/cbor2, v 5.1.2
 
 from importlib import import_module
-hwmod='sha2'  # she, ascon, full, sha2, sha3
+hwmod='full'  # ascon, full, sha2, sha3, she
 hw = import_module('hw_' + hwmod)
 
 elog = []
 url = 'https://ez_iot.com/endorse'
 
-secret = b'A 16-byte secret'
+if (hw.len_skey == 16):
+    secret = b'A 16-byte secret'
+else:
+    secret = b'Here are thirty two secret bytes'
+
 mars = mars.MARS_RoT(hw, secret, 4)
 mars.Lock()
-mid = mars.Derive(0, b'DeviceIdentifier')
+mid = mars.Derive(0, b'DeviceIdentifier')[:16]
 print('MARS ID', mid.hex())
 
 # Load, Measure, Extend, Execute
@@ -81,7 +85,7 @@ def genCEL(pcrsel):
             for j,dig in elog:
                 # examine elog for events matching i
                 if i==j:
-                    diglist.append((hw.hashalg, dig))
+                    diglist.append((hw.alg_hash, dig))
             if len(diglist):
                 # uses the IMA content (type 7)
                 celr = (len(cel), i, diglist, (7, 'MARS', b''))

@@ -47,7 +47,7 @@ class MARS_RoT:
     def __init__(self, hw, secret, bsize, debug=False):
         self.debug = debug
         if debug: print('Provisioning of new MARS device')
-        # assert len(secret) == 32
+        assert len(secret) == hw.len_skey
         assert bsize > 0 and bsize <= 32
         self.hw = hw                    # hardware, i.e. Crypt methods
         self.CryptXkdf = hw.CryptAkdf if hw.CryptAkdf else hw.CryptSkdf
@@ -185,9 +185,11 @@ class MARS_RoT:
         assert self.locked()
         snapshot = self.CryptSnapshot( regsel, nonce )
         AK = self.CryptXkdf(self.DP, b'R', ctx)
-        print('AK =', AK.hex())
-        #print('AK =', AK.public_key().export_key(format='PEM'))
-        #print('AKpub', pem)
+        if (self.hw.CryptAkdf):
+            print('AK =', AK.public_key().export_key(format='PEM'))
+            #print('AKpub', pem)
+        else:
+            print('AK =', AK.hex())
         return self.hw.CryptSign(AK, snapshot)
 
     def Sign(self, ctxiskey, ctx, dig):
@@ -213,15 +215,17 @@ if __name__ == '__main__':
 
     from os import urandom
 
-    # secret = b'Here are thirty two secret bytes'
-    secret = b'A 16-byte secret'
-
-    # import hw_full as hw
-    # import hw_she as hw
-    import hw_ascon as hw
+    # import hw_ascon as hw
+    import hw_full as hw
     # import hw_sha2 as hw
     # import hw_sha3 as hw
- 
+    # import hw_she as hw
+
+    if (hw.len_skey == 16):
+        secret = b'A 16-byte secret'
+    else:
+        secret = b'Here are thirty two secret bytes'
+
     mars = MARS_RoT(hw, secret, 4, True)
 
     dig = hw.CryptHash(b'this is a test')

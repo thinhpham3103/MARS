@@ -9,7 +9,10 @@
 import aes
 import aes_mphash as hashmod
 
-hashalg = 0x81  # TPM_ALG_? AES_MP
+len_digest = hashmod.digest_size
+len_sign = 16
+len_skey = 16
+alg_hash = 0x81  # TPM_ALG_? AES_MP
 
 # convert int i to big endian array of n bytes
 def int2bebar(i, n):

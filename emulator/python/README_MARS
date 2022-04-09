@@ -6,7 +6,8 @@ a Primary Seed, and PCR bank size. See client.py (and README_DEMO)
 for example usage.
 
 DEPENDENCIES:
-pip install pycryptodome
+pip3 install pycryptodome # 3.14.0
+
 
 Crypto support are in the hw_<mod>.py files, and can be summarized with:
 

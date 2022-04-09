@@ -6,13 +6,16 @@
 from hashlib import sha256
 import hmac
 
+len_digest = sha256().digest_size
+len_sign = 32
+len_skey = 32
+alg_hash = 0x0b  # TPM_ALG_SHA256
+alg_skdf  = 0x22  # TPM_ALG_KDF1_SP800_108
+
 class hashmod:
-    digest_size = sha256().digest_size
+    digest_size = len_digest
     def new(data=b''):
         return sha256(data)
-
-hashalg = 0x0b  # TPM_ALG_SHA256
-kdfalg  = 0x22  # TPM_ALG_KDF1_SP800_108
 
 def SelfTest():
     dig = hashmod.new(b'PYTHON').digest()

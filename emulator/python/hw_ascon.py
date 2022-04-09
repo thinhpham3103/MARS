@@ -6,9 +6,12 @@ T. Brostrom
 """
 
 from ascon import ascon_hash, ascon_encrypt, ascon_decrypt
-
-hashalg = 0x80  # TPM_ALG_? ASCON_HASH
 CryptHash = ascon_hash
+
+len_digest = 32
+len_sign = 16
+len_skey = 16
+alg_hash = 0x80  # TPM_ALG_? ASCON_HASH
 
 def SelfTest():
     return True # TODO: write some real tests

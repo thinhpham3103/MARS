@@ -28,14 +28,17 @@ for mod in ( 'she', 'ascon', 'full', 'sha2', 'sha3' ):
 # ENDORSER CODE:
 # format is { mid:AK, ... }
 dev_db = { 
-           bytes.fromhex('b4b28f261159ad999f946ffa29026ead') : # SHE
-           bytes.fromhex('5c7f0e9a8b6a6c24f083f65f9e5e2902'),
            bytes.fromhex('7847c4bfdc78e1fa91a1b819b4a75ed8') : # ASCON
            bytes.fromhex('12eea89fb0a5415da2c3b121be47f7d7'),
-           bytes.fromhex('0f2a4cbe528c3af705b99aacd89ac9d4da660e960d2f89215be7f9ae1c86f824') : # SHA256
-           bytes.fromhex('563c94e783a2d43e2248a874595ece012a560b073a9fccf68b32e0e2d9195c47'),
-           bytes.fromhex('bb7a6229485f9b43a4ac58ca64bc3ea7fc8d2d7f8f7e7ab5cb544959132bb69b') : # SHA3_256
-           bytes.fromhex('0f2574379d2f5546af006496362a040355cd1f09bb37b5e8e0ade40b7623d680'),
+
+           bytes.fromhex('82a57db7ba29635fb325888136522788') : # SHA256
+           bytes.fromhex('c7dc6893829827db7ffd45528ccf86b83ddc9cd9c15124db9df1e30b419cff3f'),
+
+           bytes.fromhex('418e0ca3c80b5bbbb91ea96daa4ec3f4') : # SHA3_256
+           bytes.fromhex('a65239023f86ee357cd97b6e0f64045cb922d70ed1c11c4cfc78a1a32c696658'),
+
+           bytes.fromhex('b4b28f261159ad999f946ffa29026ead') : # SHE
+           bytes.fromhex('5c7f0e9a8b6a6c24f083f65f9e5e2902'),
          }
 
 # Check if digest is properly signed by mid's shared AK
@@ -62,7 +65,7 @@ def cel_verify(cel, pcrs):
         pcr_e = bytes(hw.hashmod.digest_size)
         print('Processing CEL Record', recnum, ', PCR', index)
         for hashalg,dig in diglist:
-            assert hashalg == hw.hashalg
+            assert hashalg == hw.alg_hash
             print('   ', dig.hex())
             # Extend PCR_Expected
             pcr_e = hw.CryptHash(pcr_e + dig)
