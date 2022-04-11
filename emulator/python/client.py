@@ -10,9 +10,12 @@ import socket
 import mars
 import cbor2 as cbor   # from https://travis-ci.com/agronholm/cbor2, v 5.1.2
 
+from sys import argv
+if len(argv) != 2:
+    print('Usage:', argv[0], '<hardware module>')
+    exit()
 from importlib import import_module
-hwmod='full'  # ascon, full, sha2, sha3, she
-hw = import_module('hw_' + hwmod)
+hw = import_module('hw_' + argv[1])
 
 elog = []
 url = 'https://ez_iot.com/endorse'

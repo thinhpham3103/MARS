@@ -214,12 +214,12 @@ class MARS_RoT:
 if __name__ == '__main__':
 
     from os import urandom
-
-    # import hw_ascon as hw
-    import hw_full as hw
-    # import hw_sha2 as hw
-    # import hw_sha3 as hw
-    # import hw_she as hw
+    from sys import argv
+    if len(argv) != 2:
+        print('Usage:', argv[0], '<hardware module>')
+        exit()
+    from importlib import import_module
+    hw = import_module('hw_' + argv[1])
 
     if (hw.len_skey == 16):
         secret = b'A 16-byte secret'
