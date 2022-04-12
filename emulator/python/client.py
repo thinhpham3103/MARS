@@ -3,8 +3,6 @@
 # MARS Client Attester demo
 # T. Brostrom, Cyber Pack Ventures, Inc.
 
-# change hwmod to try different crypto algorithms
-
 import sys
 import socket
 import mars
@@ -15,7 +13,8 @@ if len(argv) != 2:
     print('Usage:', argv[0], '<hardware module>')
     exit()
 from importlib import import_module
-hw = import_module('hw_' + argv[1])
+hwmod = argv[1]
+hw = import_module('hw_' + hwmod)
 
 elog = []
 url = 'https://ez_iot.com/endorse'

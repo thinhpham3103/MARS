@@ -40,15 +40,27 @@ def CryptAkdf(key, x, y):
     print('Akdf:', hex(new.d)[2:])
     return new
 
-def CryptSign(key, msg):
-    return DSS.new(key, 'deterministic-rfc6979').sign(msg)
-    # or 'fips-186-3'
+# Hasher_dummy is a hack to make an externally produced digest,
+# look like it was produced locally, and part of a hasher object.
+# This is needed by pycryptodome's DSS.
+# DSS needs digest() and digest_size.
+# HMAC needs block_size and new().
 
-class Hasher_dummy:  # to make DSS Verify happy
-    def __init__(self, data=b''): 
+class Hasher_dummy:  # to make DSS sign() and verify() happy
+    block_size = 0
+    def __init__(self, data):
         self.dig = data
+        self.digest_size = hashmod.digest_size # len(data)
+        self.block_size = self.digest_size # ?
     def digest(self):
         return self.dig
+    def new(self, stuff):
+        return hashmod.new(stuff)
+
+def CryptSign(key, dig):
+    hd = Hasher_dummy(dig)
+    return DSS.new(key, 'deterministic-rfc6979').sign(hd)
+    # or 'fips-186-3'
 
 def CryptVerify(pub, dig, sig):
     # verify = DSS.new(pub, 'fips-186-3').verify
@@ -85,7 +97,7 @@ if __name__ == '__main__':
     prv = CryptAkdf(secret, b'R', b'')
     pub = prv.public_key()
 
-    sig = CryptSign(prv, h)
+    sig = CryptSign(prv, dig)
     print('sig =', sig.hex())
 
     print('Verify', CryptVerify(pub, dig, sig))

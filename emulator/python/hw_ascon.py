@@ -40,20 +40,20 @@ def CryptSkdf(k, label, context):
 
 CryptAkdf = None
 
-def CryptSign(k, h):
+def CryptSign(key, dig):
     # ascon_encrypt(key, nonce, associateddata, plaintext)
     label = b'Z'
     label += bytes(16-len(label))
-    print("SIGN: key", k.hex())
+    print("SIGN: key", key.hex())
     print("SIGN: nnc", label.hex())
-    print("SIGN:  ad", h.digest().hex())
-    sig = ascon_encrypt(k, label, h.digest(), b'')
+    print("SIGN:  ad", dig.hex())
+    sig = ascon_encrypt(key, label, dig, b'')
     print("SIGN: sig", sig.hex())
     return sig
 
-def CryptVerify(k, dig, sig):
+def CryptVerify(key, dig, sig):
     # ascon_decrypt(key, nonce, associateddata, ciphertext)
     label = b'Z'
     label += bytes(16-len(label))
-    return ascon_decrypt(k, label, dig, sig) != None
+    return ascon_decrypt(key, label, dig, sig) != None
 

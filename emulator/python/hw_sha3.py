@@ -4,14 +4,13 @@
 # Requires pycryptodome 3.14.0
 # Tom Brostrom, CPVI
 
-from Crypto.Hash import SHA3_256
-from Crypto.Hash import KMAC256
-hashmod = SHA3_256
+from Crypto.Hash import KMAC256, SHA3_256 as hashmod
 
 len_digest = hashmod.digest_size
 len_sign = 32
 len_skey = 32
 alg_hash = 0x27  # TPM_ALG_SHA3_256
+
 def CryptHash(data):
     return hashmod.new(data).digest()
 
@@ -21,11 +20,11 @@ def CryptSkdf(K, label, context, L=len_skey):
 
 CryptAkdf = None
 
-def CryptSign(K, h):
-    return KMAC256.new(key=K, data=h.digest(), mac_len=len_sign, custom=b'').digest()
+def CryptSign(key, dig):
+    return KMAC256.new(key=key, data=dig, mac_len=len_sign, custom=b'').digest()
 
-def CryptVerify(K, msg, sig):
-    return sig == KMAC256.new(key=K, data=msg, mac_len=len_sign, custom=b'').digest()
+def CryptVerify(key, dig, sig):
+    return sig == CryptSign(key, dig)
 
 def SelfTest():
     res = CryptHash(b'PYTHON')

@@ -12,23 +12,6 @@
 from threading import Lock, current_thread
 from enum import Enum
 
-# Hasher_dummy is a hack to make an externally produced digest,
-# look like it was produced locally, and part of a hasher object.
-# This is needed by pycryptodome's CMAC and HMAC.
-# DSS needs digest() and digest_size.
-# HMAC needs block_size and new().
-class Hasher_dummy:  # to make cmac and DSS Verify happy
-    block_size = 0
-    def __init__(self, data, hmod):
-        self.hmod = hmod # hasher object, for access to h.new()
-        self.dig = data
-        self.digest_size = len(data)
-        self.block_size = self.digest_size # ?
-    def digest(self):
-        return self.dig
-    def new(self, stuff):
-        return self.hmod.new(stuff)
-
 class PT(Enum): # TODO: incomplete
     PCRS = 1
     MAX_DIGEST = 2
@@ -112,7 +95,7 @@ class MARS_RoT:
                 h.update(self.PCR[i])
         h.update(ctx)
         if self.debug: print('snapshot:', h.digest().hex())
-        return h
+        return h.digest()
 
     # SEQUENCED PRIMITIVES
 
@@ -162,7 +145,7 @@ class MARS_RoT:
     def Derive(self, regsel, ctx):
         assert self.locked()
         snapshot = self.CryptSnapshot( regsel, ctx )
-        return self.hw.CryptSkdf(self.DP, b'X', snapshot.digest())
+        return self.hw.CryptSkdf(self.DP, b'X', snapshot)
 
     def DpDerive(self, regsel, ctx):
         assert self.locked()
@@ -170,7 +153,7 @@ class MARS_RoT:
             self.DP = self.hw.CryptSkdf(self.PS, b'D', b'')
         else:
             snapshot = self.CryptSnapshot( regsel, ctx )
-            self.DP = self.hw.CryptSkdf(self.DP, b'D', snapshot.digest())
+            self.DP = self.hw.CryptSkdf(self.DP, b'D', snapshot)
 
     def PublicRead(self, restricted, ctx):
         assert self.locked()
@@ -199,7 +182,7 @@ class MARS_RoT:
             key = ctx
         else:
             key = self.CryptXkdf(self.DP, b'U', ctx)   # b'S' ??
-        return self.hw.CryptSign(key, Hasher_dummy(dig, self.hw.hashmod))
+        return self.hw.CryptSign(key, dig)
 
     # need to combine iskey and restricted into single parameter ??
     def SignatureVerify(self, ctxiskey, restricted, ctx, dig, sig):
@@ -268,7 +251,7 @@ if __name__ == '__main__':
     sig = mars.Quote(b'', 1<<0, nonce)
     print('SIG ', sig.hex())
 
-    # dig = mars.CryptSnapshot(1<<0, nonce).digest()
+    # dig = mars.CryptSnapshot(1<<0, nonce)
     dig = hw.CryptHash(b'\x00\x00\x00\x01' + mars.RegRead(0) + nonce)
     print('dig ', dig.hex())
     print('Verified? ', 'Success' if mars.SignatureVerify(False, True, b'', dig, sig) else 'FAIL')
