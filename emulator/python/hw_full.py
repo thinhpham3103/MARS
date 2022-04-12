@@ -5,12 +5,12 @@
 # Requires pycryptodome
 # Tom Brostrom, CPVI
 
-from Crypto.Hash import SHA256
+from Crypto.Hash import SHA256 as hashmod
 from Crypto.PublicKey import ECC
 from Crypto.Signature import DSS
 import random
 
-len_digest = 32
+len_digest = hashmod.digest_size
 len_sign = 16
 len_skey = 16
 len_akey = 32
@@ -25,18 +25,13 @@ def drbg(n):
     # print(n, b.hex())
     return b
 
-def SelfTest():
-    return True # TODO: write some real tests
-
-hashmod = SHA256
-# CryptHasher must support .digest_size, .update(), .digest()
-
 def CryptHash(data):
     return hashmod.new(data).digest()
 
 def CryptSkdf(key, x, y):
+    assert len(key) == len_skey
     drbg_init(key + x + y)
-    return drbg(len(key))
+    return drbg(len_skey)
 
 def CryptAkdf(key, x, y):
     print('Akdf key', key.hex(), 'x', x.hex(), 'y', y.hex())
@@ -46,10 +41,8 @@ def CryptAkdf(key, x, y):
     return new
 
 def CryptSign(key, msg):
-    # signer = DSS.new(key, 'fips-186-3')
-    signer = DSS.new(key, 'deterministic-rfc6979')
-    return signer.sign(msg)
-    # return DSS.new(key, 'fips-186-3').sign(msg)
+    return DSS.new(key, 'deterministic-rfc6979').sign(msg)
+    # or 'fips-186-3'
 
 class Hasher_dummy:  # to make DSS Verify happy
     def __init__(self, data=b''): 
@@ -68,9 +61,16 @@ def CryptVerify(pub, dig, sig):
     # print('Good' if rc else 'bad')
     return rc
 
+def SelfTest():
+    dig = hashmod.new(b'PYTHON').digest()
+    exp = bytes.fromhex('329b3dcf798a73e8b87f486bcdaa8e2070f6437f1d470fec6e174ef8ec7b1554')
+    return dig == exp
+
 
 if __name__ == '__main__':
     from os import urandom
+
+    print('SelfTest:', SelfTest())
 
     secret = bytes.fromhex('101112131415161718191a1b1c1d1e1f101112131415161718191a1b1c1d1e1f')
 
