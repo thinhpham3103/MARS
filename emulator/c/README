@@ -1,0 +1,71 @@
+MARS: Prototype emulator of TCG MARS spec v1r7a
+Author: Tom Brostrom
+
+BUILD INSTRUCTIONS
+
+Can build MARS based on crypto from Ascon or AES.
+
+Ascon:
+	source from https://github.com/TheMatjaz/LibAscon
+	install in peer directory
+	cd ../ascon/LibAscon-master/src
+	gcc -c *.c -I../inc -Drestrict= -std=c99
+	ar cqs libascon.a *.o
+
+AES:
+	source from https://github.com/kokke/tiny-AES-c
+	install in peer directory
+	gcc -c aes.c
+
+make
+	executables --> ../build
+
+
+ARCHITECTURE
+
+The layering of software used here is as follows, and is described below:
+
+	APPLICATION
+	MARS
+	CRYPT PRIMITIVES
+	BASE CRYPTOGRAPHIC ALGORITHMS
+
+ARCHITECTURE.BASE CRYPTOGRAPHIC ALGORITHMS
+
+The algorithms implemented here were envisioned to be, but not limited to, those implemented in microcontroller hardware as an internal peripheral to accelerate specific cryptographic operations. These algorithms form the basis for which all cryptographic processing is done by MARS.
+
+The base algorithms used here are SHA256 and Ascon.
+
+ARCHITECTURE.CRYPT PRIMITIVES
+
+These so-called "crypt" primitives are those required by MARS. They are documented in the MARS Library Specification as Support Functions. "Crypt" functions are constructed using the base algorithms.  Those functions share a common prefix and are named:
+
+CryptHashInit, CryptHashUpdate, CryptHashFini
+- produce a fixed-size digest as a result of hashing variable length input
+
+CryptSign - signs a provided digest
+
+CryptVerify - determines if a signature is valid for the provided digest and the specified signing key
+
+CryptSkdf - derive a Symmetric key 
+
+CryptAkdf - derive an Asymmetric key
+
+CryptXkdf - performs CryptAkdf if implemented, otherwise CryptSkdf
+
+Source code implementing the crypt functions are found in hw_*.c.
+
+Examples include hw_ascon.c and hw_she.c.
+
+
+ARCHITECTURE.MARS
+
+The emulator for MARS and the API is found in mars.c. MARS is crypt-agnostic and can be viewed as a state machine that orchestrates the Crypt layer to function as a root-of-trust.
+
+mars.c is compiled for the appropriate Crypt layer by pre-including that layer's header file. This can be seen in the Makefile where the "-include" argument is used with gcc.
+
+
+ARCHITECTURE.APPLICATION
+
+Application code built upon MARS is available as simple demonstration programs. Refer to demo*.c.
+
