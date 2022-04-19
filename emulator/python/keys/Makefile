@@ -12,9 +12,10 @@ ez.crt:
 	openssl req -new -x509 -key ez.pem -out ez.crt -days 730
 	# openssl x509 -text -noout -in ez.crt
 
-akpub.pem: akprv.pem
+# assume akpub.pem copied from mars debug output
+# akpub.pem: akprv.pem
 	# Extracting public key from $@
-	openssl ec -in $< -pubout -out $@
+	# openssl ec -in $< -pubout -out $@
 
 fake.pem:
 	# Creating a fake / dummy key

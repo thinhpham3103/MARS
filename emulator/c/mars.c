@@ -78,7 +78,6 @@ static bool locked()
 
 MARS_RC MARS_Lock()
 {
-    if (failure) return MARS_RC_FAILURE; // unnecessary - no MARS interaction
     if (locked() || pthread_mutex_lock(&mx))
         return MARS_RC_LOCK;
     tid = pthread_self();
@@ -87,16 +86,16 @@ MARS_RC MARS_Lock()
 
 MARS_RC MARS_Unlock()
 {
-    if (failure)   return MARS_RC_FAILURE;
     if (!locked()) return MARS_RC_LOCK;
     CryptHashInit(&shc);
     tid = 0;
     return pthread_mutex_unlock(&mx) ? MARS_RC_LOCK : MARS_RC_SUCCESS;
 }
 
-MARS_RC MARS_SelfTest ()
+MARS_RC MARS_SelfTest (
+bool fullTest) // ignored for now
 {
-    // if (failure) return MARS_RC_FAILURE;
+    if (failure) return MARS_RC_FAILURE;
     if (!locked()) return MARS_RC_LOCK;
     failure = !CryptSelfTest();
     printf("SelfTest: %s\n", failure ? "\n\n\nFAIL\n\n" : "Pass");
@@ -159,12 +158,6 @@ MARS_RC MARS_CapabilityGet (
         if (caplen != sizeof(uint16_t))
             return MARS_RC_BUFFER;
         *(uint16_t *)cap = PROFILE_ALG_SKDF;
-        break;
-
-        case MARS_PT_CTXISKEY:
-        if (caplen != sizeof(bool))
-            return MARS_RC_BUFFER;
-        *(bool *)cap = true;
         break;
 
         case MARS_PT_LEN_AKEY:
@@ -258,8 +251,6 @@ MARS_RC MARS_Derive (
     uint16_t ctxlen,
     void * out)
 {
-uint8_t snapshot[PROFILE_DIGEST_LEN];
-
     if (failure) return MARS_RC_FAILURE;
     if (!locked()) return MARS_RC_LOCK;
     if (regSelect >> PROFILE_REG_COUNT)
@@ -267,8 +258,9 @@ uint8_t snapshot[PROFILE_DIGEST_LEN];
     if (!out || (!ctx && ctxlen))
         return MARS_RC_BUFFER;
 
-    CryptSnapshot(&snapshot, regSelect, ctx, ctxlen);
-    CryptSkdf(out, &DP, MARS_KX, &snapshot, sizeof(snapshot));
+    uint8_t snapshot[PROFILE_DIGEST_LEN];
+    CryptSnapshot(snapshot, regSelect, ctx, ctxlen);
+    CryptSkdf(out, DP, MARS_KX, snapshot, sizeof(snapshot));
     return MARS_RC_SUCCESS;
 }
 
@@ -287,11 +279,11 @@ MARS_RC MARS_DpDerive (
     if (ctx)
         {
         uint8_t snapshot[PROFILE_DIGEST_LEN];
-        CryptSnapshot(&snapshot, regSelect, ctx, ctxlen);
-        CryptSkdf(&DP, &DP, MARS_KD, &snapshot, sizeof(snapshot));
+        CryptSnapshot(snapshot, regSelect, ctx, ctxlen);
+        CryptSkdf(DP, DP, MARS_KD, snapshot, sizeof(snapshot));
         }
     else
-        CryptSkdf(&DP, &PS, MARS_KD, 0, 0);
+        CryptSkdf(DP, PS, MARS_KD, 0, 0);
 
     return MARS_RC_SUCCESS;
 }
@@ -314,9 +306,6 @@ MARS_RC MARS_Quote (
     uint16_t ctxlen,
     void * sig)
 {
-uint8_t AK[PROFILE_XKEY_LEN];
-uint8_t snapshot[PROFILE_DIGEST_LEN];
-
     if (failure) return MARS_RC_FAILURE;
     if (!locked()) return MARS_RC_LOCK;
     if (regSelect >> PROFILE_REG_COUNT)
@@ -324,44 +313,33 @@ uint8_t snapshot[PROFILE_DIGEST_LEN];
     if ((nlen && !nonce) || (ctxlen && !ctx) || !sig)
         return MARS_RC_BUFFER;
 
-    CryptSnapshot(&snapshot, regSelect, nonce, nlen);
-    CryptXkdf(&AK, &DP, MARS_KR, ctx, ctxlen);
+    uint8_t AK[PROFILE_XKEY_LEN];
+    uint8_t snapshot[PROFILE_DIGEST_LEN];
+    CryptSnapshot(snapshot, regSelect, nonce, nlen);
+    CryptXkdf(AK, DP, MARS_KR, ctx, ctxlen);
     CryptSign(sig, AK, snapshot);
 
     return MARS_RC_SUCCESS;
 }
 
 MARS_RC MARS_Sign (
-    bool ctxiskey,
     const void * ctx,
     uint16_t ctxlen,
     const void * dig,
     void * sig)
 {
-const void *k;
-uint8_t key[PROFILE_XKEY_LEN];
-
     if (failure) return MARS_RC_FAILURE;
     if (!locked()) return MARS_RC_LOCK;
     if (!(dig && sig) || (ctxlen && !ctx))
         return MARS_RC_BUFFER;
 
-    if (ctxiskey)
-        if (ctxlen != PROFILE_XKEY_LEN)
-            return MARS_RC_BUFFER;
-        else
-            k = ctx;
-    else
-        {
-        CryptXkdf(&key, &DP, MARS_KU, ctx, ctxlen);
-        k = &key;
-        }
-    CryptSign(sig, k, dig);
+    uint8_t key[PROFILE_XKEY_LEN];
+    CryptXkdf(key, DP, MARS_KU, ctx, ctxlen);
+    CryptSign(sig, key, dig);
     return MARS_RC_SUCCESS;
 }
 
 MARS_RC MARS_SignatureVerify (
-    bool ctxiskey,
     bool restricted,
     const void * ctx,
     uint16_t ctxlen,
@@ -369,35 +347,23 @@ MARS_RC MARS_SignatureVerify (
     const void * sig,
     bool * result)
 {
-const void *k;
-uint8_t key[PROFILE_XKEY_LEN];
-uint8_t label;
-
     if (failure) return MARS_RC_FAILURE;
     if (!locked()) return MARS_RC_LOCK;
     if (!(dig && sig && result) || (ctxlen && !ctx))
         return MARS_RC_BUFFER;
 
-    if (ctxiskey)
-        if (ctxlen != PROFILE_XKEY_LEN)
-            return MARS_RC_BUFFER;
-        else
-            k = ctx;
-    else
-        {
-        label = restricted ? MARS_KR : MARS_KU;
-        CryptXkdf(&key, &DP, label, ctx, ctxlen);
-        k = &key;
-        }
-    *result = CryptVerify(k, dig, sig);
+    uint8_t key[PROFILE_XKEY_LEN];
+    uint8_t label = restricted ? MARS_KR : MARS_KU;
+    CryptXkdf(key, DP, label, ctx, ctxlen);
+    *result = CryptVerify(key, dig, sig);
     return MARS_RC_SUCCESS;
 }
 
-// _MARS_init is supposed to be a signal to hardware.
+// _MARS_Init is supposed to be a signal to hardware.
 // It is not part of the API, but is emulated here.
-void _MARS_init()
+void _MARS_Init()
 {
-    hexout("PS", &PS, sizeof(PS));
+    hexout("PS", PS, sizeof(PS));
     memset(REG, 0, sizeof(REG));
     // Init TSR to profile-specified values
     failure = false;
@@ -407,8 +373,8 @@ void _MARS_init()
     tid = 0;   // thread ID of mx lock owner; 0 if unlocked
 
     MARS_Lock();
-    MARS_SelfTest();
+    MARS_SelfTest(true);
     MARS_DpDerive(0, 0, 0);     // initialize (reset) the DP
-    hexout("DP", &DP, sizeof(DP));
+    hexout("DP", DP, sizeof(DP));
     MARS_Unlock();
 }

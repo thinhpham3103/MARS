@@ -36,13 +36,20 @@ class MARS_RoT:
         self.CryptXkdf = hw.CryptAkdf if hw.CryptAkdf else hw.CryptSkdf
         self.PS = secret                # Primary Seed
         self.bsize = bsize              # PCR bank size
-        self.DP = self.hw.CryptSkdf(self.PS, b'D', b'')
-        self.PCR = [bytes(self.hw.hashmod.digest_size) for _ in range(self.bsize)]
-        # TODO: Dynamic PCRs, if any, are initialized here
         self.hobj = None
         self.seqpcr = None
         self.lock = Lock()
         self.thread = None
+
+        self.PCR = [bytes(self.hw.len_digest) for _ in range(self.bsize)]
+        # init TSR
+        self.failure = False
+        self.Lock()
+        self.SelfTest(True)
+        # self.DP = self.hw.CryptSkdf(self.PS, b'D', b'')
+        self.DpDerive(0, None)
+        self.Unlock()
+        
 
     # MANAGEMENT API
 
@@ -50,9 +57,10 @@ class MARS_RoT:
     def locked(self):
         return self.lock.locked() and self.thread == current_thread()
 
-    def SelfTest(self):
+    def SelfTest(self, fullTest):
         assert self.locked()
-        return hw.SelfTest()
+        assert fullTest is True # partial not yet supported
+        return self.hw.SelfTest()
 
     def Lock(self):
         assert not self.locked()
@@ -175,23 +183,17 @@ class MARS_RoT:
             print('AK =', AK.hex())
         return self.hw.CryptSign(AK, snapshot)
 
-    def Sign(self, ctxiskey, ctx, dig):
+    def Sign(self, ctx, dig):
         assert self.locked()
         assert ctx # must not be Null
-        if ctxiskey:
-            key = ctx
-        else:
-            key = self.CryptXkdf(self.DP, b'U', ctx)   # b'S' ??
+        key = self.CryptXkdf(self.DP, b'U', ctx)   # b'S' ??
         return self.hw.CryptSign(key, dig)
 
     # need to combine iskey and restricted into single parameter ??
-    def SignatureVerify(self, ctxiskey, restricted, ctx, dig, sig):
+    def SignatureVerify(self, restricted, ctx, dig, sig):
         assert self.locked()
-        if ctxiskey:
-            key = ctx
-        else:
-            label = b'R' if restricted else b'U' # b'S' ??
-            key = self.CryptXkdf(self.DP, label, ctx)
+        label = b'R' if restricted else b'U' # b'S' ??
+        key = self.CryptXkdf(self.DP, label, ctx)
         return self.hw.CryptVerify(key, dig, sig)
 
 if __name__ == '__main__':
@@ -254,13 +256,13 @@ if __name__ == '__main__':
     # dig = mars.CryptSnapshot(1<<0, nonce)
     dig = hw.CryptHash(b'\x00\x00\x00\x01' + mars.RegRead(0) + nonce)
     print('dig ', dig.hex())
-    print('Verified? ', 'Success' if mars.SignatureVerify(False, True, b'', dig, sig) else 'FAIL')
+    print('Verified? ', 'Success' if mars.SignatureVerify(True, b'', dig, sig) else 'FAIL')
 
     # IDevID tests
     print('IDevID signature test')
     dig = hw.CryptHash(b'Initial Device Identity')
-    sig = mars.Sign( False, b'IDevID', dig)
-    print('Verified? ', 'Success' if mars.SignatureVerify(False, False, b'IDevID', dig, sig) else 'FAIL')
+    sig = mars.Sign(b'IDevID', dig)
+    print('Verified? ', 'Success' if mars.SignatureVerify(False, b'IDevID', dig, sig) else 'FAIL')
 
     if hw.CryptAkdf:
         pub = mars.PublicRead(True, b'')

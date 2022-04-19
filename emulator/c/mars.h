@@ -12,10 +12,9 @@
 #define MARS_PT_ALG_SIGN	8	// uint16_t	TCG-registered algorithm for signing by CryptSign()
 #define MARS_PT_ALG_SKDF	9	// uint16_t	TCG-registered algorithm for symmetric key derivation by CryptSkdf()
 #define MARS_PT_ALG_AKDF	10	// uint16_t	TCG-registered algorithm for asymmetric key derivation by CryptAkdf()
-#define MARS_PT_CTXISKEY	11	// bool	Indicates whether ctxiskey as a parameter may be passed as TRUE
 
 #define MARS_RC_SUCCESS	0	// Command executed as expected
-#define MARS_RC_FAILURE	1	// MARS_SelfTest() placed MARS in failure mode or MARS is otherwise inaccessible
+#define MARS_RC_FAILURE	1	// self-testing placed MARS in failure mode or MARS is otherwise inaccessible
 #define MARS_RC_LOCK	2	// MARS is not locked
 #define MARS_RC_BUFFER	3	// Invalid buffer pointer (null or misaligned) or length
 #define MARS_RC_COMMAND	4	// Command not supported
@@ -27,7 +26,7 @@ typedef uint16_t MARS_RC;
 
 // MANAGEMENT
 
-MARS_RC MARS_SelfTest ();
+MARS_RC MARS_SelfTest (bool fullTest);
 MARS_RC MARS_Lock ();
 MARS_RC MARS_Unlock ();
 
@@ -91,14 +90,12 @@ MARS_RC MARS_Quote (
     void * sig);
 
 MARS_RC MARS_Sign (
-    bool ctxiskey,
     const void * ctx,
     uint16_t ctxlen,
     const void * dig,
     void * sig);
 
 MARS_RC MARS_SignatureVerify (
-    bool ctxiskey,
     bool restricted,
     const void * ctx,
     uint16_t ctxlen,

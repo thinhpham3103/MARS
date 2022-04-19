@@ -20,7 +20,7 @@ MARS_RC rc;
 size_t outlen = 0;
 uint16_t diglen, keylen;
 
-    _MARS_init();
+    _MARS_Init();
     MARS_Lock();
 
     MARS_CapabilityGet(MARS_PT_LEN_DIGEST, &diglen, sizeof(diglen));
