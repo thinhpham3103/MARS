@@ -25,7 +25,7 @@ uint16_t diglen, siglen, keylen;
 
     MARS_CapabilityGet(MARS_PT_LEN_DIGEST, &diglen, sizeof(diglen));
     MARS_CapabilityGet(MARS_PT_LEN_SIGN, &siglen, sizeof(siglen));
-    MARS_CapabilityGet(MARS_PT_LEN_SKEY, &keylen, sizeof(keylen));
+    MARS_CapabilityGet(MARS_PT_LEN_KSYM, &keylen, sizeof(keylen));
 
 uint8_t dig[diglen];
 uint8_t sig[siglen];

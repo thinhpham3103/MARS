@@ -33,8 +33,8 @@ static pthread_t tid = -1;  // thread ID of mx lock owner; 0 if unlocked
 
 // MARS Emulator state -------------------------------------
 
-static uint8_t PS[PROFILE_SKEY_LEN] = "A 16-byte secret";
-static uint8_t DP[PROFILE_SKEY_LEN];
+static uint8_t PS[PROFILE_KSYM_LEN] = "A 16-byte secret";
+static uint8_t DP[PROFILE_KSYM_LEN];
 static uint8_t REG[PROFILE_REG_COUNT][PROFILE_DIGEST_LEN];
 
 static bool failure = false;
@@ -136,10 +136,10 @@ MARS_RC MARS_CapabilityGet (
         *(uint16_t *)cap = PROFILE_SIG_LEN;
         break;
 
-        case MARS_PT_LEN_SKEY:
+        case MARS_PT_LEN_KSYM:
         if (caplen != sizeof(uint16_t))
             return MARS_RC_BUFFER;
-        *(uint16_t *)cap = PROFILE_SKEY_LEN;
+        *(uint16_t *)cap = PROFILE_KSYM_LEN;
         break;
 
         case MARS_PT_ALG_HASH:
@@ -160,7 +160,8 @@ MARS_RC MARS_CapabilityGet (
         *(uint16_t *)cap = PROFILE_ALG_SKDF;
         break;
 
-        case MARS_PT_LEN_AKEY:
+        case MARS_PT_LEN_KPUB:
+        case MARS_PT_LEN_KPRV:
         case MARS_PT_ALG_AKDF:
         default:
         return MARS_RC_VALUE;
@@ -255,7 +256,7 @@ MARS_RC MARS_Derive (
     if (!locked()) return MARS_RC_LOCK;
     if (regSelect >> PROFILE_REG_COUNT)
         return MARS_RC_REG;
-    if (!out || (!ctx && ctxlen))
+    if (!out || (ctxlen && !ctx))
         return MARS_RC_BUFFER;
 
     uint8_t snapshot[PROFILE_DIGEST_LEN];
@@ -273,7 +274,7 @@ MARS_RC MARS_DpDerive (
     if (!locked()) return MARS_RC_LOCK;
     if (regSelect >> PROFILE_REG_COUNT)
         return MARS_RC_REG;
-    if (!ctx && ctxlen)
+    if (ctxlen && !ctx)
         return MARS_RC_BUFFER;
 
     if (ctx)
@@ -313,7 +314,7 @@ MARS_RC MARS_Quote (
     if ((nlen && !nonce) || (ctxlen && !ctx) || !sig)
         return MARS_RC_BUFFER;
 
-    uint8_t AK[PROFILE_XKEY_LEN];
+    uint8_t AK[PROFILE_XKDF_LEN];
     uint8_t snapshot[PROFILE_DIGEST_LEN];
     CryptSnapshot(snapshot, regSelect, nonce, nlen);
     CryptXkdf(AK, DP, MARS_KR, ctx, ctxlen);
@@ -333,7 +334,7 @@ MARS_RC MARS_Sign (
     if (!(dig && sig) || (ctxlen && !ctx))
         return MARS_RC_BUFFER;
 
-    uint8_t key[PROFILE_XKEY_LEN];
+    uint8_t key[PROFILE_XKDF_LEN];
     CryptXkdf(key, DP, MARS_KU, ctx, ctxlen);
     CryptSign(sig, key, dig);
     return MARS_RC_SUCCESS;
@@ -352,7 +353,7 @@ MARS_RC MARS_SignatureVerify (
     if (!(dig && sig && result) || (ctxlen && !ctx))
         return MARS_RC_BUFFER;
 
-    uint8_t key[PROFILE_XKEY_LEN];
+    uint8_t key[PROFILE_XKDF_LEN];
     uint8_t label = restricted ? MARS_KR : MARS_KU;
     CryptXkdf(key, DP, label, ctx, ctxlen);
     *result = CryptVerify(key, dig, sig);

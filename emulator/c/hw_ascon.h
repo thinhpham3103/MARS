@@ -14,11 +14,11 @@
 #define CryptXkdf CryptSkdf
 
 #define PROFILE_DIGEST_LEN ASCON_HASH_DIGEST_LEN
-#define PROFILE_SKEY_LEN   ASCON_AEAD128_KEY_LEN
-#define PROFILE_XKEY_LEN   PROFILE_SKEY_LEN
+#define PROFILE_KSYM_LEN   ASCON_AEAD128_KEY_LEN
+#define PROFILE_XKDF_LEN   PROFILE_KSYM_LEN
 #define PROFILE_SIG_LEN    ASCON_AEAD_TAG_MIN_SECURE_LEN
 #define PROFILE_ALG_HASH   0x81
-#define PROFILE_ALG_SIGN   0x82 // FIX - need TPM_ALG #s from TCG alg reg
+#define PROFILE_ALG_SIGN   0x82 // TODO - need TPM_ALG #s from TCG alg reg
 #define PROFILE_ALG_SKDF   0x83
 
 typedef ascon_hash_ctx_t profile_shc_t;

@@ -7,7 +7,7 @@ all: $(BUILD) $(ALLB)
 $(BUILD):
 	mkdir $@
 
-$(BUILD)/%.o: %.c
+$(BUILD)/%.o: %.c mars.h
 	gcc -c $< -o $@
 
 $(BUILD)/mars_she.o: hw_she.h mars.c mars.h

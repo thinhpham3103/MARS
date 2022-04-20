@@ -6,12 +6,13 @@
 #define MARS_PT_TSR	2	// uint16_t	number of consecutive TSRs implemented on this MARS
 #define MARS_PT_LEN_DIGEST	3	// uint16_t	size of a digest that can be processed or produced
 #define MARS_PT_LEN_SIGN	4	// uint16_t	size of signature produced by CryptSign()
-#define MARS_PT_LEN_SKEY	5	// uint16_t	size of symmetric key produced by CryptSkdf()
-#define MARS_PT_LEN_AKEY	6	// uint16_t	size of public asymmetric key produced by CryptAkdf()
-#define MARS_PT_ALG_HASH	7	// uint16_t	TCG-registered algorithm for hashing by CryptHash()
-#define MARS_PT_ALG_SIGN	8	// uint16_t	TCG-registered algorithm for signing by CryptSign()
-#define MARS_PT_ALG_SKDF	9	// uint16_t	TCG-registered algorithm for symmetric key derivation by CryptSkdf()
-#define MARS_PT_ALG_AKDF	10	// uint16_t	TCG-registered algorithm for asymmetric key derivation by CryptAkdf()
+#define MARS_PT_LEN_KSYM	5	// uint16_t	size of symmetric key produced by CryptSkdf()
+#define MARS_PT_LEN_KPUB	6	// uint16_t	size of asymmetric key returned by MARS_PublicRead()
+#define MARS_PT_LEN_KPRV	7	// uint16_t	size of private asymmetric key produced by CryptAkdf()
+#define MARS_PT_ALG_HASH	8	// uint16_t	TCG-registered algorithm for hashing by CryptHash()
+#define MARS_PT_ALG_SIGN	9	// uint16_t	TCG-registered algorithm for signing by CryptSign()
+#define MARS_PT_ALG_SKDF	10	// uint16_t	TCG-registered algorithm for symmetric key derivation by CryptSkdf()
+#define MARS_PT_ALG_AKDF	11	// uint16_t	TCG-registered algorithm for asymmetric key derivation by CryptAkdf()
 
 #define MARS_RC_SUCCESS	0	// Command executed as expected
 #define MARS_RC_FAILURE	1	// self-testing placed MARS in failure mode or MARS is otherwise inaccessible
