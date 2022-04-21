@@ -22,10 +22,10 @@ typeof(len) i;
     printf("\n");
 }
 
-#define MARS_KX 'X'
-#define MARS_KD 'D'
-#define MARS_KU 'U'
-#define MARS_KR 'R'
+#define MARS_LX 'X'
+#define MARS_LD 'D'
+#define MARS_LU 'U'
+#define MARS_LR 'R'
 
 // MARS API state ------------------------------------------
 static pthread_mutex_t mx;  // mutex for Lock and Unlock
@@ -261,7 +261,7 @@ MARS_RC MARS_Derive (
 
     uint8_t snapshot[PROFILE_DIGEST_LEN];
     CryptSnapshot(snapshot, regSelect, ctx, ctxlen);
-    CryptSkdf(out, DP, MARS_KX, snapshot, sizeof(snapshot));
+    CryptSkdf(out, DP, MARS_LX, snapshot, sizeof(snapshot));
     return MARS_RC_SUCCESS;
 }
 
@@ -281,10 +281,10 @@ MARS_RC MARS_DpDerive (
         {
         uint8_t snapshot[PROFILE_DIGEST_LEN];
         CryptSnapshot(snapshot, regSelect, ctx, ctxlen);
-        CryptSkdf(DP, DP, MARS_KD, snapshot, sizeof(snapshot));
+        CryptSkdf(DP, DP, MARS_LD, snapshot, sizeof(snapshot));
         }
     else
-        CryptSkdf(DP, PS, MARS_KD, 0, 0);
+        CryptSkdf(DP, PS, MARS_LD, 0, 0);
 
     return MARS_RC_SUCCESS;
 }
@@ -317,7 +317,7 @@ MARS_RC MARS_Quote (
     uint8_t AK[PROFILE_XKDF_LEN];
     uint8_t snapshot[PROFILE_DIGEST_LEN];
     CryptSnapshot(snapshot, regSelect, nonce, nlen);
-    CryptXkdf(AK, DP, MARS_KR, ctx, ctxlen);
+    CryptXkdf(AK, DP, MARS_LR, ctx, ctxlen);
     CryptSign(sig, AK, snapshot);
 
     return MARS_RC_SUCCESS;
@@ -335,7 +335,7 @@ MARS_RC MARS_Sign (
         return MARS_RC_BUFFER;
 
     uint8_t key[PROFILE_XKDF_LEN];
-    CryptXkdf(key, DP, MARS_KU, ctx, ctxlen);
+    CryptXkdf(key, DP, MARS_LU, ctx, ctxlen);
     CryptSign(sig, key, dig);
     return MARS_RC_SUCCESS;
 }
@@ -354,7 +354,7 @@ MARS_RC MARS_SignatureVerify (
         return MARS_RC_BUFFER;
 
     uint8_t key[PROFILE_XKDF_LEN];
-    uint8_t label = restricted ? MARS_KR : MARS_KU;
+    uint8_t label = restricted ? MARS_LR : MARS_LU;
     CryptXkdf(key, DP, label, ctx, ctxlen);
     *result = CryptVerify(key, dig, sig);
     return MARS_RC_SUCCESS;
