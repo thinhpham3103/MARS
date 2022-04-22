@@ -27,11 +27,7 @@ typeof(len) i;
 #define MARS_LU 'U'
 #define MARS_LR 'R'
 
-// MARS API state ------------------------------------------
-static pthread_mutex_t mx;  // mutex for Lock and Unlock
-static pthread_t tid = -1;  // thread ID of mx lock owner; 0 if unlocked
-
-// MARS Emulator state -------------------------------------
+// MARS Device state ------------------------------------------
 
 static uint8_t PS[PROFILE_KSYM_LEN] = "A 16-byte secret";
 static uint8_t DP[PROFILE_KSYM_LEN];
@@ -46,14 +42,13 @@ static profile_shc_t shc;   // Sequenced Hash Context
 
 CryptSnapshot(void * out, uint32_t regSelect, const void * ctx, uint16_t ctxlen)
 {
-uint32_t be_regsel;  // Big Endian copy of regSelect
 profile_shc_t shc;
 uint16_t i;
 
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    be_regsel = __builtin_bswap32 (regSelect);
+    uint32_t be_regsel = __builtin_bswap32 (regSelect);
 #else
-    be_regsel = regSelect;
+#   define be_regsel regSelect
 #endif
 
     // any TSRs in regSelect should be updated here
@@ -70,33 +65,10 @@ uint16_t i;
     hexout("snapshot", out, PROFILE_DIGEST_LEN);
 }
 
-// determine if already locked by the caller
-static bool locked()
-{
-    return tid == pthread_self();
-}
-
-MARS_RC MARS_Lock()
-{
-    if (locked() || pthread_mutex_lock(&mx))
-        return MARS_RC_LOCK;
-    tid = pthread_self();
-    return MARS_RC_SUCCESS;
-}
-
-MARS_RC MARS_Unlock()
-{
-    if (!locked()) return MARS_RC_LOCK;
-    CryptHashInit(&shc);
-    tid = 0;
-    return pthread_mutex_unlock(&mx) ? MARS_RC_LOCK : MARS_RC_SUCCESS;
-}
-
 MARS_RC MARS_SelfTest (
 bool fullTest) // ignored for now
 {
     if (failure) return MARS_RC_FAILURE;
-    if (!locked()) return MARS_RC_LOCK;
     failure = !CryptSelfTest();
     printf("SelfTest: %s\n", failure ? "\n\n\nFAIL\n\n" : "Pass");
     return failure ? MARS_RC_FAILURE : MARS_RC_SUCCESS;
@@ -108,7 +80,6 @@ MARS_RC MARS_CapabilityGet (
     uint16_t caplen)
 {
     if (failure)   return MARS_RC_FAILURE;
-    if (!locked()) return MARS_RC_LOCK;
     if (!cap)      return MARS_RC_BUFFER;
     switch (pt)
         {
@@ -172,7 +143,6 @@ MARS_RC MARS_CapabilityGet (
 MARS_RC MARS_SequenceHash ()
 {
     if (failure) return MARS_RC_FAILURE;
-    if (!locked()) return MARS_RC_LOCK;
     CryptHashInit(&shc);
     return MARS_RC_SUCCESS;
 }
@@ -184,7 +154,6 @@ MARS_RC MARS_SequenceUpdate(
     size_t * outlen)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (!locked()) return MARS_RC_LOCK;
     if ((inlen && !in) || !outlen)
         return MARS_RC_BUFFER;
     // assumes sequence is hash
@@ -200,7 +169,6 @@ MARS_RC MARS_SequenceComplete(
     size_t * outlen)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (!locked()) return MARS_RC_LOCK;
     if (!out || !outlen)
         return MARS_RC_BUFFER;
     // assumes sequence is hash
@@ -216,7 +184,6 @@ MARS_RC MARS_PcrExtend (
     const void * dig)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (!locked()) return MARS_RC_LOCK;
     if (pcrIndex >= PROFILE_PCR_COUNT)
         return MARS_RC_REG;
     if (!dig)
@@ -234,7 +201,6 @@ MARS_RC MARS_RegRead (
     void * dig)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (!locked()) return MARS_RC_LOCK;
     if (regIndex >= PROFILE_REG_COUNT)
         return MARS_RC_REG;
     if (!dig)
@@ -253,7 +219,6 @@ MARS_RC MARS_Derive (
     void * out)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (!locked()) return MARS_RC_LOCK;
     if (regSelect >> PROFILE_REG_COUNT)
         return MARS_RC_REG;
     if (!out || (ctxlen && !ctx))
@@ -271,7 +236,6 @@ MARS_RC MARS_DpDerive (
     uint16_t ctxlen)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (!locked()) return MARS_RC_LOCK;
     if (regSelect >> PROFILE_REG_COUNT)
         return MARS_RC_REG;
     if (ctxlen && !ctx)
@@ -308,7 +272,6 @@ MARS_RC MARS_Quote (
     void * sig)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (!locked()) return MARS_RC_LOCK;
     if (regSelect >> PROFILE_REG_COUNT)
         return MARS_RC_REG;
     if ((nlen && !nonce) || (ctxlen && !ctx) || !sig)
@@ -330,7 +293,6 @@ MARS_RC MARS_Sign (
     void * sig)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (!locked()) return MARS_RC_LOCK;
     if (!(dig && sig) || (ctxlen && !ctx))
         return MARS_RC_BUFFER;
 
@@ -349,7 +311,6 @@ MARS_RC MARS_SignatureVerify (
     bool * result)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (!locked()) return MARS_RC_LOCK;
     if (!(dig && sig && result) || (ctxlen && !ctx))
         return MARS_RC_BUFFER;
 
@@ -362,20 +323,15 @@ MARS_RC MARS_SignatureVerify (
 
 // _MARS_Init is supposed to be a signal to hardware.
 // It is not part of the API, but is emulated here.
-void _MARS_Init()
+// Invoked by dlopen()
+void __attribute__((constructor)) _MARS_Init()
 {
     hexout("PS", PS, sizeof(PS));
     memset(REG, 0, sizeof(REG));
     // Init TSR to profile-specified values
     failure = false;
 
-    // mx and tid are not part of MARS HW, but are init'd here for the API
-    pthread_mutex_init(&mx, NULL);
-    tid = 0;   // thread ID of mx lock owner; 0 if unlocked
-
-    MARS_Lock();
     MARS_SelfTest(true);
     MARS_DpDerive(0, 0, 0);     // initialize (reset) the DP
     hexout("DP", DP, sizeof(DP));
-    MARS_Unlock();
 }

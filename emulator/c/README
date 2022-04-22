@@ -9,16 +9,20 @@ Ascon:
 	source from https://github.com/TheMatjaz/LibAscon
 	install in peer directory
 	cd ../ascon/LibAscon-master/src
-	gcc -c *.c -I../inc -Drestrict= -std=c99
-	ar cqs libascon.a *.o
+	gcc -fpic -c *.c -I../inc -Drestrict= -std=c99
+	gcc -shared -o ascon.so *.o
 
 AES:
 	source from https://github.com/kokke/tiny-AES-c
 	install in peer directory
-	gcc -c aes.c
+	(the "make" below will compile)
 
 make
 	executables --> ../build
+
+To run:
+    LD_PRELOAD=../build/mars_she.so ../build/demo
+    LD_PRELOAD=../build/mars_ascon.so ../build/demo
 
 
 ARCHITECTURE

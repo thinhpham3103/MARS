@@ -12,18 +12,37 @@ typeof(len) i;
     printf("\n");
 }
 
+static bool lock = false;
+MARS_RC MARS_Lock()
+{
+    if (lock)
+        return MARS_RC_LOCK;
+    lock = true;
+    return MARS_RC_SUCCESS;
+}
 
-main()
+MARS_RC MARS_Unlock()
+{
+    if (!lock)
+        return MARS_RC_LOCK;
+    lock = false;
+    return MARS_RC_SUCCESS;
+}
+
+main(int argc, char **argv)
 {
 MARS_RC rc;
 bool flag = 0;
 size_t outlen = 0;
 uint16_t diglen, siglen, keylen;
 
-    _MARS_Init();
     MARS_Lock();
 
-    MARS_CapabilityGet(MARS_PT_LEN_DIGEST, &diglen, sizeof(diglen));
+    rc = MARS_CapabilityGet(MARS_PT_LEN_DIGEST, &diglen, sizeof(diglen));
+    if (rc) {
+        printf("usage: LD_PRELOAD=<mars.so> %s\n", argv[0]);
+        exit(1);
+    }
     MARS_CapabilityGet(MARS_PT_LEN_SIGN, &siglen, sizeof(siglen));
     MARS_CapabilityGet(MARS_PT_LEN_KSYM, &keylen, sizeof(keylen));
 
@@ -31,7 +50,6 @@ uint8_t dig[diglen];
 uint8_t sig[siglen];
 uint8_t id[keylen];
 uint8_t nonce[diglen];
-uint8_t snapshot[diglen];
 
     char msg1[] = "this is a test";
     MARS_SequenceHash();
@@ -46,7 +64,6 @@ uint8_t snapshot[diglen];
     MARS_RegRead(0, dig);
     hexout("PCR0", dig, sizeof(dig));
 
-    // CryptSnapshot(dig, 1, "ABCDE", 5);
     MARS_Derive(1, "CompoundDeviceID", 16, id);
     hexout("CDI", id, sizeof(id));
 
@@ -57,12 +74,16 @@ uint8_t snapshot[diglen];
     hexout("SIG", sig, sizeof(sig));
 
 // To verify a quote, the snapshot has to be reproduced
-// CryptSnapshot is not part of the API, so would normally be implemented
-// in SW without MARS.
-    CryptSnapshot(snapshot, 1<<0, nonce, sizeof(nonce));
+    // CryptSnapshot(snapshot, 1<<0, nonce, sizeof(nonce));
+    MARS_SequenceHash();
+    MARS_SequenceUpdate("\x00\x00\x00\x01", 4, 0, &outlen);
+    MARS_SequenceUpdate(dig, sizeof(dig), 0, &outlen);
+    MARS_SequenceUpdate(nonce, sizeof(nonce), 0, &outlen);
+    MARS_SequenceComplete(dig, &outlen);
+    hexout("SS", dig, sizeof(dig));
 
     MARS_SignatureVerify(/*restricted*/1, /*AK ctx*/"", /*ctxlen*/0,
-        snapshot, sig, &flag);
+        dig, sig, &flag);
 
     printf("Verify %s\n", flag ? "True" : "False");
 
