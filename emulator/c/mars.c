@@ -157,6 +157,7 @@ MARS_RC MARS_SequenceUpdate(
     if ((inlen && !in) || !outlen)
         return MARS_RC_BUFFER;
     // assumes sequence is hash
+    // need to check *outlen long enough for other sequences
 //  if (!hash_sequence_in_progress)
 //      return MARS_RC_SEQ;
     CryptHashUpdate(&shc, in, inlen);
@@ -169,9 +170,9 @@ MARS_RC MARS_SequenceComplete(
     size_t * outlen)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (!out || !outlen)
-        return MARS_RC_BUFFER;
     // assumes sequence is hash
+    if (!out || !outlen || *outlen < PROFILE_DIGEST_LEN)
+        return MARS_RC_BUFFER;
 //  if (!hash_sequence_in_progress)
 //      return MARS_RC_SEQ;
     CryptHashFini(&shc, out);

@@ -33,7 +33,7 @@ main(int argc, char **argv)
 {
 MARS_RC rc;
 bool flag = 0;
-size_t outlen = 0;
+size_t outlen;
 uint16_t diglen, siglen, keylen;
 
     MARS_Lock();
@@ -53,10 +53,12 @@ uint8_t nonce[diglen];
 
     char msg1[] = "this is a test";
     MARS_SequenceHash();
+    outlen = 0;
     MARS_SequenceUpdate(msg1, sizeof(msg1)-1, 0, &outlen);
+    outlen = sizeof(dig);
     MARS_SequenceComplete(dig, &outlen);
 
-    hexout("dig", dig, sizeof(dig));
+    hexout("dig", dig, outlen);
 
     MARS_DpDerive(0, 0, 0);     // initialize (reset) the DP
 
@@ -76,11 +78,13 @@ uint8_t nonce[diglen];
 // To verify a quote, the snapshot has to be reproduced
     // CryptSnapshot(snapshot, 1<<0, nonce, sizeof(nonce));
     MARS_SequenceHash();
+    outlen = 0;
     MARS_SequenceUpdate("\x00\x00\x00\x01", 4, 0, &outlen);
     MARS_SequenceUpdate(dig, sizeof(dig), 0, &outlen);
     MARS_SequenceUpdate(nonce, sizeof(nonce), 0, &outlen);
+    outlen = sizeof(dig);
     MARS_SequenceComplete(dig, &outlen);
-    hexout("SS", dig, sizeof(dig));
+    hexout("SS", dig, outlen);
 
     MARS_SignatureVerify(/*restricted*/1, /*AK ctx*/"", /*ctxlen*/0,
         dig, sig, &flag);
