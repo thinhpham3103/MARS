@@ -257,8 +257,7 @@ MARS_RC MARS_PublicRead (
     bool restricted,
     const void * ctx,
     uint16_t ctxlen,
-    void * pub,
-    uint16_t publen)
+    void * pub)
 {
     return MARS_RC_COMMAND;
 }
