@@ -9,9 +9,15 @@
 #include "mars.h"
 
 #define PROFILE_COUNT_REG (PROFILE_COUNT_PCR + PROFILE_COUNT_TSR)
-#ifdef PROFILE_LEN_KPRV
+
+#if defined(PROFILE_LEN_KPRV) && PROFILE_LEN_KPRV
+#  if PROFILE_LEN_KPRV <= PROFILE_LEN_KPUB
+#     error KPRV too small for KPUB
+#  endif
 #  define PROFILE_LEN_XKDF PROFILE_LEN_KPRV
 #else
+#  define PROFILE_LEN_KPUB 0
+#  define PROFILE_LEN_KPRV 0
 #  define PROFILE_LEN_XKDF PROFILE_LEN_KSYM
 #endif
 
@@ -84,59 +90,54 @@ MARS_RC MARS_CapabilityGet (
 {
     if (failure)   return MARS_RC_FAILURE;
     if (!cap)      return MARS_RC_BUFFER;
+    if (caplen != sizeof(uint16_t))
+        return MARS_RC_BUFFER;
     switch (pt)
         {
         case MARS_PT_PCR:
-        if (caplen != sizeof(uint16_t))
-            return MARS_RC_BUFFER;
         *(uint16_t *)cap = PROFILE_COUNT_PCR;
         break;
 
         case MARS_PT_TSR:
-        if (caplen != sizeof(uint16_t))
-            return MARS_RC_BUFFER;
         *(uint16_t *)cap = PROFILE_COUNT_TSR;
         break;
 
         case MARS_PT_LEN_DIGEST:
-        if (caplen != sizeof(uint16_t))
-            return MARS_RC_BUFFER;
         *(uint16_t *)cap = PROFILE_LEN_DIGEST;
         break;
 
         case MARS_PT_LEN_SIGN:
-        if (caplen != sizeof(uint16_t))
-            return MARS_RC_BUFFER;
         *(uint16_t *)cap = PROFILE_LEN_SIGN;
         break;
 
         case MARS_PT_LEN_KSYM:
-        if (caplen != sizeof(uint16_t))
-            return MARS_RC_BUFFER;
         *(uint16_t *)cap = PROFILE_LEN_KSYM;
         break;
 
+        case MARS_PT_LEN_KPUB:
+        *(uint16_t *)cap = PROFILE_LEN_KPUB;
+        break;
+
+        case MARS_PT_LEN_KPRV:
+        *(uint16_t *)cap = PROFILE_LEN_KPRV;
+        break;
+
         case MARS_PT_ALG_HASH:
-        if (caplen != sizeof(uint16_t))
-            return MARS_RC_BUFFER;
         *(uint16_t *)cap = PROFILE_ALG_HASH;
         break;
 
         case MARS_PT_ALG_SIGN:
-        if (caplen != sizeof(uint16_t))
-            return MARS_RC_BUFFER;
         *(uint16_t *)cap = PROFILE_ALG_SIGN;
         break;
 
         case MARS_PT_ALG_SKDF:
-        if (caplen != sizeof(uint16_t))
-            return MARS_RC_BUFFER;
         *(uint16_t *)cap = PROFILE_ALG_SKDF;
         break;
 
-        case MARS_PT_LEN_KPUB:
-        case MARS_PT_LEN_KPRV:
         case MARS_PT_ALG_AKDF:
+        *(uint16_t *)cap = PROFILE_ALG_AKDF;
+        break;
+
         default:
         return MARS_RC_VALUE;
         }
@@ -263,7 +264,17 @@ MARS_RC MARS_PublicRead (
     uint16_t ctxlen,
     void * pub)
 {
+#if defined(PROFILE_LEN_KPRV) && PROFILE_LEN_KPRV > PROFILE_LEN_KPUB
+    if (ctxlen && !ctx)
+        return MARS_RC_BUFFER;
+    uint8_t key[PROFILE_LEN_KPRV];
+    uint8_t label = restricted ? MARS_LR : MARS_LU;
+    CryptAkdf(key, DP, label, ctx, ctxlen);
+    memcpy(pub, key, PROFILE_LEN_KPUB);
+    return MARS_RC_SUCCESS;
+#else
     return MARS_RC_COMMAND;
+#endif
 }
 
 MARS_RC MARS_Quote (
