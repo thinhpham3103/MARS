@@ -2,14 +2,23 @@
 #include <stdlib.h> // for size_t
 #include <stdbool.h> // for bool, true, false
 
+// From TCG Algorithm Registry
+#define TPM_ALG_ERROR 0
+#define TPM_ALG_CMAC  0x3F
+
+// note: mars.c contains defs for PROFILE_COUNT_REG and PROFILE_LEN_XKDF
+
 #define PROFILE_COUNT_PCR 4
 #define PROFILE_COUNT_TSR 0
 #define PROFILE_LEN_DIGEST 16
-#define PROFILE_LEN_KSYM 16
 #define PROFILE_LEN_SIGN 16
-#define PROFILE_ALG_HASH   0x84 // TODO - need TPM_ALG #s from TCG alg reg
-#define PROFILE_ALG_SIGN   0x3F // TPM_ALG_CMAC ??
-#define PROFILE_ALG_SKDF   0x86
+#define PROFILE_LEN_KSYM 16
+#define PROFILE_LEN_KPUB 0
+#define PROFILE_LEN_KPRV 0
+#define PROFILE_ALG_HASH 0x84 // TODO - not approved
+#define PROFILE_ALG_SIGN TPM_ALG_CMAC
+#define PROFILE_ALG_SKDF 0x86 // TODO - not approved
+#define PROFILE_ALG_AKDF TPM_ALG_ERROR
 
 #define CryptSelfTest SHE_selftest
 #define CryptHash SHE_hash
