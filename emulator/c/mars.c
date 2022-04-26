@@ -1,8 +1,6 @@
 #ifndef PROFILE_LEN_DIGEST
-#error preinclude profile header using: gcc -include profile.h
+#  error preinclude profile header using: gcc -include profile.h
 #endif
-// #include "hw_she.h"
-// #include "hw_ascon.h"
 
 #include <string.h> // for memset()
 #include <stdio.h>
@@ -10,7 +8,12 @@
 #include <pthread.h>
 #include "mars.h"
 
-#define PROFILE_REG_COUNT (PROFILE_PCR_COUNT + PROFILE_TSR_COUNT)
+#define PROFILE_COUNT_REG (PROFILE_COUNT_PCR + PROFILE_COUNT_TSR)
+#ifdef PROFILE_LEN_KPRV
+#  define PROFILE_LEN_XKDF PROFILE_LEN_KPRV
+#else
+#  define PROFILE_LEN_XKDF PROFILE_LEN_KSYM
+#endif
 
 static void hexout(const char *msg, const void *buf, uint16_t len)
 {
