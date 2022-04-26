@@ -5,13 +5,6 @@
 #include "hw_ascon.h"
 
 #include <string.h> // for memset()
-#define PROFILE_PCR_COUNT 4
-#define PROFILE_TSR_COUNT 0
-
-#define ZPROFILE_DIGEST_LEN  ASCON_HASH_DIGEST_LEN
-#define ZPROFILE_KEY_LEN     ASCON_AEAD128_KEY_LEN
-#define ZPROFILE_SIG_LEN     ASCON_AEAD_TAG_MIN_SECURE_LEN
-#define ZPROFILE_NONCE_LEN   16 // PROFILE_DIGEST_LEN
 
 static ascon_hash_ctx_t shc;
 
@@ -41,9 +34,9 @@ void CryptSign(void * out, const void * key, const void * digest)
 	key, nonce,
         /*AD*/ digest,
         /*PT*/ 0,
-        /*AD-len*/ PROFILE_DIGEST_LEN,
+        /*AD-len*/ PROFILE_LEN_DIGEST,
         /*PT-LEN*/ 0,
-        /*tag-len*/ PROFILE_SIG_LEN);
+        /*tag-len*/ PROFILE_LEN_SIGN);
 }
 
 bool CryptVerify(const void *key, const void *dig, const void *sig)
@@ -59,7 +52,7 @@ uint8_t nonce[ASCON_AEAD_NONCE_LEN];
     return ascon_aead128_decrypt(
         /* PT, key, nonce */         0, key, (uint8_t *)&nonce,
         /* AD, CT, expected tag */   dig, 0, sig,
-        /* lengths of AD, CT, tag */ PROFILE_DIGEST_LEN, 0, PROFILE_SIG_LEN);
+        /* lengths of AD, CT, tag */ PROFILE_LEN_DIGEST, 0, PROFILE_LEN_SIGN);
 }
 
 // There is no standard KDF using Ascon
@@ -84,7 +77,7 @@ uint8_t nonce[ASCON_AEAD_NONCE_LEN];
         /*PT*/ 0,
         /*AD-len*/ ctxlen,
         /*PT-LEN*/ 0,
-        /*tag-len*/ PROFILE_SIG_LEN);
+        /*tag-len*/ PROFILE_LEN_SIGN);
 }
 
 // Test vector from .../LibAscon-master/tst/vectors/hash.txt

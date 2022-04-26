@@ -2,13 +2,14 @@
 #include <stdlib.h> // for size_t
 #include <stdbool.h> // for bool, true, false
 
-#define PROFILE_PCR_COUNT 4
-#define PROFILE_TSR_COUNT 0
+#define PROFILE_COUNT_PCR 4
+#define PROFILE_COUNT_TSR 0
+#define PROFILE_COUNT_REG (PROFILE_COUNT_PCR + PROFILE_COUNT_TSR)
 
-#define PROFILE_DIGEST_LEN 16
-#define PROFILE_KSYM_LEN 16
-#define PROFILE_XKDF_LEN PROFILE_KSYM_LEN
-#define PROFILE_SIG_LEN 16
+#define PROFILE_LEN_DIGEST 16
+#define PROFILE_LEN_KSYM 16
+#define PROFILE_LEN_XKDF PROFILE_LEN_KSYM
+#define PROFILE_LEN_SIGN 16
 #define PROFILE_ALG_HASH   0x84 // TODO - need TPM_ALG #s from TCG alg reg
 #define PROFILE_ALG_SIGN   0x3F // TPM_ALG_CMAC ??
 #define PROFILE_ALG_SKDF   0x86
@@ -27,8 +28,8 @@
 typedef struct {
     size_t   total;          // total # of source bytes hashed
     uint16_t part_n;         // number of bytes in partial block
-    uint8_t  part_blk[32];   // includes room for extra block when padding
-    uint8_t  H[16];          // running digest
+    uint8_t  part_blk[2*PROFILE_LEN_DIGEST];   // includes room for extra block when padding
+    uint8_t  H[PROFILE_LEN_DIGEST];          // running digest
 } she_hctx_t;
 
 typedef she_hctx_t profile_shc_t;   // for MARS' Sequenced Hash Context

@@ -2,8 +2,9 @@
 #include <stdlib.h> // for size_t
 #include <stdbool.h> // for bool, true, false
 
-#define PROFILE_PCR_COUNT 4
-#define PROFILE_TSR_COUNT 0
+#define PROFILE_COUNT_PCR 4
+#define PROFILE_COUNT_TSR 0
+#define PROFILE_COUNT_REG (PROFILE_COUNT_PCR + PROFILE_COUNT_TSR)
 
 #include "../ascon/LibAscon-master/inc/ascon.h"
 
@@ -13,10 +14,10 @@
 #define CryptHashFini ascon_hash_final
 #define CryptXkdf CryptSkdf
 
-#define PROFILE_DIGEST_LEN ASCON_HASH_DIGEST_LEN
-#define PROFILE_KSYM_LEN   ASCON_AEAD128_KEY_LEN
-#define PROFILE_XKDF_LEN   PROFILE_KSYM_LEN
-#define PROFILE_SIG_LEN    ASCON_AEAD_TAG_MIN_SECURE_LEN
+#define PROFILE_LEN_DIGEST ASCON_HASH_DIGEST_LEN
+#define PROFILE_LEN_KSYM   ASCON_AEAD128_KEY_LEN
+#define PROFILE_LEN_XKDF   PROFILE_LEN_KSYM
+#define PROFILE_LEN_SIGN   ASCON_AEAD_TAG_MIN_SECURE_LEN
 #define PROFILE_ALG_HASH   0x81
 #define PROFILE_ALG_SIGN   0x82 // TODO - need TPM_ALG #s from TCG alg reg
 #define PROFILE_ALG_SKDF   0x83

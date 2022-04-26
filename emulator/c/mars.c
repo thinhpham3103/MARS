@@ -1,4 +1,4 @@
-#ifndef PROFILE_DIGEST_LEN
+#ifndef PROFILE_LEN_DIGEST
 #error preinclude profile header using: gcc -include profile.h
 #endif
 // #include "hw_she.h"
@@ -29,9 +29,9 @@ typeof(len) i;
 
 // MARS Device state ------------------------------------------
 
-static uint8_t PS[PROFILE_KSYM_LEN] = "A 16-byte secret";
-static uint8_t DP[PROFILE_KSYM_LEN];
-static uint8_t REG[PROFILE_REG_COUNT][PROFILE_DIGEST_LEN];
+static uint8_t PS[PROFILE_LEN_KSYM] = "A 16-byte secret";
+static uint8_t DP[PROFILE_LEN_KSYM];
+static uint8_t REG[PROFILE_COUNT_REG][PROFILE_LEN_DIGEST];
 
 static bool failure = false;
 bool MARS_debug = false;
@@ -52,17 +52,17 @@ uint16_t i;
 #endif
 
     // any TSRs in regSelect should be updated here
-    // TSRs are in REG[PROFILE_PCR_COUNT ... PROFILE_REG_COUNT-1]
+    // TSRs are in REG[PROFILE_COUNT_PCR ... PROFILE_COUNT_REG-1]
 
     CryptHashInit(&shc);
     CryptHashUpdate(&shc, (void *)&be_regsel, 4);
 
-    for (i=0; i<PROFILE_REG_COUNT; i++)
+    for (i=0; i<PROFILE_COUNT_REG; i++)
         if ((1<<i) & regSelect)
-            CryptHashUpdate(&shc, REG[i], PROFILE_DIGEST_LEN);
+            CryptHashUpdate(&shc, REG[i], PROFILE_LEN_DIGEST);
     CryptHashUpdate(&shc, ctx, ctxlen);
     CryptHashFini(&shc, out);
-    hexout("snapshot", out, PROFILE_DIGEST_LEN);
+    hexout("snapshot", out, PROFILE_LEN_DIGEST);
 }
 
 MARS_RC MARS_SelfTest (
@@ -86,31 +86,31 @@ MARS_RC MARS_CapabilityGet (
         case MARS_PT_PCR:
         if (caplen != sizeof(uint16_t))
             return MARS_RC_BUFFER;
-        *(uint16_t *)cap = PROFILE_PCR_COUNT;
+        *(uint16_t *)cap = PROFILE_COUNT_PCR;
         break;
 
         case MARS_PT_TSR:
         if (caplen != sizeof(uint16_t))
             return MARS_RC_BUFFER;
-        *(uint16_t *)cap = PROFILE_TSR_COUNT;
+        *(uint16_t *)cap = PROFILE_COUNT_TSR;
         break;
 
         case MARS_PT_LEN_DIGEST:
         if (caplen != sizeof(uint16_t))
             return MARS_RC_BUFFER;
-        *(uint16_t *)cap = PROFILE_DIGEST_LEN;
+        *(uint16_t *)cap = PROFILE_LEN_DIGEST;
         break;
 
         case MARS_PT_LEN_SIGN:
         if (caplen != sizeof(uint16_t))
             return MARS_RC_BUFFER;
-        *(uint16_t *)cap = PROFILE_SIG_LEN;
+        *(uint16_t *)cap = PROFILE_LEN_SIGN;
         break;
 
         case MARS_PT_LEN_KSYM:
         if (caplen != sizeof(uint16_t))
             return MARS_RC_BUFFER;
-        *(uint16_t *)cap = PROFILE_KSYM_LEN;
+        *(uint16_t *)cap = PROFILE_LEN_KSYM;
         break;
 
         case MARS_PT_ALG_HASH:
@@ -171,12 +171,12 @@ MARS_RC MARS_SequenceComplete(
 {
     if (failure) return MARS_RC_FAILURE;
     // assumes sequence is hash
-    if (!out || !outlen || *outlen < PROFILE_DIGEST_LEN)
+    if (!out || !outlen || *outlen < PROFILE_LEN_DIGEST)
         return MARS_RC_BUFFER;
 //  if (!hash_sequence_in_progress)
 //      return MARS_RC_SEQ;
     CryptHashFini(&shc, out);
-    *outlen = PROFILE_DIGEST_LEN;
+    *outlen = PROFILE_LEN_DIGEST;
     return MARS_RC_SUCCESS;
 }
 
@@ -185,14 +185,14 @@ MARS_RC MARS_PcrExtend (
     const void * dig)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (pcrIndex >= PROFILE_PCR_COUNT)
+    if (pcrIndex >= PROFILE_COUNT_PCR)
         return MARS_RC_REG;
     if (!dig)
         return MARS_RC_BUFFER;
 
     CryptHashInit(&shc);
-    CryptHashUpdate(&shc, REG[pcrIndex], PROFILE_DIGEST_LEN);
-    CryptHashUpdate(&shc, dig, PROFILE_DIGEST_LEN);
+    CryptHashUpdate(&shc, REG[pcrIndex], PROFILE_LEN_DIGEST);
+    CryptHashUpdate(&shc, dig, PROFILE_LEN_DIGEST);
     CryptHashFini(&shc, REG[pcrIndex]);
     return MARS_RC_SUCCESS;
 }
@@ -202,12 +202,12 @@ MARS_RC MARS_RegRead (
     void * dig)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (regIndex >= PROFILE_REG_COUNT)
+    if (regIndex >= PROFILE_COUNT_REG)
         return MARS_RC_REG;
     if (!dig)
         return MARS_RC_BUFFER;
 
-    memcpy(dig, REG[regIndex], PROFILE_DIGEST_LEN);
+    memcpy(dig, REG[regIndex], PROFILE_LEN_DIGEST);
     return MARS_RC_SUCCESS;
 }
 
@@ -220,12 +220,12 @@ MARS_RC MARS_Derive (
     void * out)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (regSelect >> PROFILE_REG_COUNT)
+    if (regSelect >> PROFILE_COUNT_REG)
         return MARS_RC_REG;
     if (!out || (ctxlen && !ctx))
         return MARS_RC_BUFFER;
 
-    uint8_t snapshot[PROFILE_DIGEST_LEN];
+    uint8_t snapshot[PROFILE_LEN_DIGEST];
     CryptSnapshot(snapshot, regSelect, ctx, ctxlen);
     CryptSkdf(out, DP, MARS_LX, snapshot, sizeof(snapshot));
     return MARS_RC_SUCCESS;
@@ -237,14 +237,14 @@ MARS_RC MARS_DpDerive (
     uint16_t ctxlen)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (regSelect >> PROFILE_REG_COUNT)
+    if (regSelect >> PROFILE_COUNT_REG)
         return MARS_RC_REG;
     if (ctxlen && !ctx)
         return MARS_RC_BUFFER;
 
     if (ctx)
         {
-        uint8_t snapshot[PROFILE_DIGEST_LEN];
+        uint8_t snapshot[PROFILE_LEN_DIGEST];
         CryptSnapshot(snapshot, regSelect, ctx, ctxlen);
         CryptSkdf(DP, DP, MARS_LD, snapshot, sizeof(snapshot));
         }
@@ -272,13 +272,13 @@ MARS_RC MARS_Quote (
     void * sig)
 {
     if (failure) return MARS_RC_FAILURE;
-    if (regSelect >> PROFILE_REG_COUNT)
+    if (regSelect >> PROFILE_COUNT_REG)
         return MARS_RC_REG;
     if ((nlen && !nonce) || (ctxlen && !ctx) || !sig)
         return MARS_RC_BUFFER;
 
-    uint8_t AK[PROFILE_XKDF_LEN];
-    uint8_t snapshot[PROFILE_DIGEST_LEN];
+    uint8_t AK[PROFILE_LEN_XKDF];
+    uint8_t snapshot[PROFILE_LEN_DIGEST];
     CryptSnapshot(snapshot, regSelect, nonce, nlen);
     CryptXkdf(AK, DP, MARS_LR, ctx, ctxlen);
     CryptSign(sig, AK, snapshot);
@@ -296,7 +296,7 @@ MARS_RC MARS_Sign (
     if (!(dig && sig) || (ctxlen && !ctx))
         return MARS_RC_BUFFER;
 
-    uint8_t key[PROFILE_XKDF_LEN];
+    uint8_t key[PROFILE_LEN_XKDF];
     CryptXkdf(key, DP, MARS_LU, ctx, ctxlen);
     CryptSign(sig, key, dig);
     return MARS_RC_SUCCESS;
@@ -314,7 +314,7 @@ MARS_RC MARS_SignatureVerify (
     if (!(dig && sig && result) || (ctxlen && !ctx))
         return MARS_RC_BUFFER;
 
-    uint8_t key[PROFILE_XKDF_LEN];
+    uint8_t key[PROFILE_LEN_XKDF];
     uint8_t label = restricted ? MARS_LR : MARS_LU;
     CryptXkdf(key, DP, label, ctx, ctxlen);
     *result = CryptVerify(key, dig, sig);
