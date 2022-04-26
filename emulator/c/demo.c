@@ -34,7 +34,7 @@ main(int argc, char **argv)
 MARS_RC rc;
 bool flag = 0;
 size_t outlen;
-uint16_t diglen, siglen, keylen;
+uint16_t diglen, siglen, keylen, halg;
 
     MARS_Lock();
 
@@ -45,6 +45,9 @@ uint16_t diglen, siglen, keylen;
     }
     MARS_CapabilityGet(MARS_PT_LEN_SIGN, &siglen, sizeof(siglen));
     MARS_CapabilityGet(MARS_PT_LEN_KSYM, &keylen, sizeof(keylen));
+    MARS_CapabilityGet(MARS_PT_ALG_HASH, &halg, sizeof(halg));
+
+    printf("Hash alg = 0x%x\n", halg);
 
 uint8_t dig[diglen];
 uint8_t sig[siglen];
