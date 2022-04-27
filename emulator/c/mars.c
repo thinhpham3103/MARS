@@ -76,11 +76,9 @@ uint16_t i = 0;
 }
 
 MARS_RC MARS_SelfTest (
-bool fullTest) // ignored for now
+    bool fullTest) // ignored for now
 {
-    if (failure) return MARS_RC_FAILURE;
-    failure = !CryptSelfTest();
-    printf("SelfTest: %s\n", failure ? "\n\n\nFAIL\n\n" : "Pass");
+    failure = failure || !CryptSelfTest();
     return failure ? MARS_RC_FAILURE : MARS_RC_SUCCESS;
 }
 
