@@ -81,7 +81,7 @@ uint8_t nonce[ASCON_AEAD_NONCE_LEN];
 }
 
 // Test vector from .../LibAscon-master/tst/vectors/hash.txt
-bool CryptSelfTest()
+bool CryptSelfTest(bool fullTest)
 {
 uint8_t dig[32];
 uint8_t exp[32] = { 0x80, 0x13, 0xEA, 0xAA, 0x19, 0x51, 0x58, 0x0A,

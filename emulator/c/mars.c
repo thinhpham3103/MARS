@@ -76,9 +76,9 @@ uint16_t i = 0;
 }
 
 MARS_RC MARS_SelfTest (
-    bool fullTest) // ignored for now
+    bool fullTest)
 {
-    failure = failure || !CryptSelfTest();
+    failure = failure || !CryptSelfTest(fullTest);
     return failure ? MARS_RC_FAILURE : MARS_RC_SUCCESS;
 }
 

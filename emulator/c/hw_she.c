@@ -178,7 +178,7 @@ she_hctx_t hctx;
 
 // These tests are from the AUTOSAR SHE spec, 4.13 Examples and Test Vectors
 // See https://www.autosar.org/fileadmin/user_upload/standards/foundation/20-11/AUTOSAR_TR_SecureHardwareExtensions.pdf
-bool SHE_selftest()
+bool SHE_selftest(bool fullTest)
 {
 size_t i;
 uint8_t key[16], out[16];
