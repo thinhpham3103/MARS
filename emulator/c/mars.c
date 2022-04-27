@@ -5,7 +5,7 @@
 #include <string.h> // for memset()
 #include <stdio.h>
 #include <stdbool.h>
-#include <pthread.h>
+#include <stdint.h>
 #include "mars.h"
 
 #define PROFILE_COUNT_REG (PROFILE_COUNT_PCR + PROFILE_COUNT_TSR)
@@ -52,7 +52,7 @@ static profile_shc_t shc;   // Sequenced Hash Context
 CryptSnapshot(void * out, uint32_t regSelect, const void * ctx, uint16_t ctxlen)
 {
 profile_shc_t shc;
-uint16_t i;
+uint16_t i = 0;
 
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     uint32_t be_regsel = __builtin_bswap32 (regSelect);
@@ -66,9 +66,10 @@ uint16_t i;
     CryptHashInit(&shc);
     CryptHashUpdate(&shc, (void *)&be_regsel, 4);
 
-    for (i=0; i<PROFILE_COUNT_REG; i++)
-        if ((1<<i) & regSelect)
-            CryptHashUpdate(&shc, REG[i], PROFILE_LEN_DIGEST);
+    do if (regSelect & 1)
+        CryptHashUpdate(&shc, REG[i], PROFILE_LEN_DIGEST);
+    while (++i<PROFILE_COUNT_REG && (regSelect>>=1));
+
     CryptHashUpdate(&shc, ctx, ctxlen);
     CryptHashFini(&shc, out);
     hexout("snapshot", out, PROFILE_LEN_DIGEST);
