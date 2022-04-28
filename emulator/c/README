@@ -1,15 +1,18 @@
-MARS: Prototype emulator of TCG MARS spec v1r7d
+MARS: Prototype emulator of TCG MARS spec
 Author: Tom Brostrom
 
 BUILD INSTRUCTIONS
 
 Can build MARS based on crypto from Ascon or AES.
+Needs openssl 3.0
 
 Ascon:
-	source from https://github.com/TheMatjaz/LibAscon
-	install in peer directory
-	cd ../ascon/LibAscon-master/src
-	gcc -fpic -c *.c -I../inc -Drestrict= -std=c99
+	mkdir ../ascon
+	cd ../ascon
+    wget https://github.com/TheMatjaz/LibAscon/archive/refs/tags/v1.2.0.zip
+    unzip v1.2.0.zip
+    rm v1.2.0.zip
+	gcc -fpic -c *.c -I../inc -std=c99
 	gcc -shared -o ascon.so *.o
 
 AES:
@@ -17,12 +20,20 @@ AES:
 	install in peer directory
 	(the "make" below will compile)
 
+SHA2:
+    Requires openssl (tested on 1.0.2)
+
+SHA3:
+    Requires openssl (tested on 3.0)
+
 make
 	executables --> ../build
 
 To run:
     LD_PRELOAD=../build/mars_she.so ../build/demo
     LD_PRELOAD=../build/mars_ascon.so ../build/demo
+    LD_PRELOAD=../build/mars_sha2.so ../build/demo
+    LD_PRELOAD=../build/mars_sha3.so ../build/demo
 
 
 ARCHITECTURE

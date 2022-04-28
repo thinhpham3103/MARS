@@ -30,6 +30,7 @@ typedef uint16_t MARS_RC;
 MARS_RC MARS_SelfTest (bool fullTest);
 MARS_RC MARS_Lock ();
 MARS_RC MARS_Unlock ();
+void MARS_dump(); // for debugging
 
 MARS_RC MARS_CapabilityGet (
     uint16_t pt,

@@ -1,8 +1,8 @@
-#include "mars.h"
 #include <string.h> // for memset()
-
 #include <stdio.h>
-void hexout(const char *msg, const void *buf, uint16_t len)
+#include "mars.h"
+
+static void hexout(const char *msg, const void *buf, uint16_t len)
 {
 typeof(len) i;
     if (msg)
@@ -13,6 +13,7 @@ typeof(len) i;
 }
 
 static bool lock = false;
+
 MARS_RC MARS_Lock()
 {
     if (lock)
@@ -75,9 +76,7 @@ uint8_t nonce[diglen];
     hexout("CDI", id, sizeof(id));
 
     memset(nonce, 'Q', sizeof(nonce));
-    hexout("NONCE", nonce, sizeof(nonce));
-    rc = MARS_Quote(/*regsel*/1<<0, nonce, sizeof(nonce), /*AK ctx*/"", /*ctxlen*/0, sig);
-    printf("rc = %d\n", rc);
+    MARS_Quote(/*regsel*/1<<0, nonce, sizeof(nonce), /*AK ctx*/"", /*ctxlen*/0, sig);
     hexout("SIG", sig, sizeof(sig));
 
 // To verify a quote, the snapshot has to be reproduced
@@ -96,8 +95,9 @@ uint8_t nonce[diglen];
 
     printf("Verify %s\n", flag ? "True" : "False");
 
+    MARS_dump();
     MARS_DpDerive(0, "XYZZY", 5);
+    MARS_dump();
 
     MARS_Unlock();
 }
-

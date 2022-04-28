@@ -1,10 +1,6 @@
-#include "mars.h"
-
-// FROM ASCON PROFILE
-#include "../ascon/LibAscon-master/inc/ascon.h"
-#include "hw_ascon.h"
-
 #include <string.h> // for memset()
+#include "mars.h"
+#include "hw_ascon.h"
 
 static ascon_hash_ctx_t shc;
 

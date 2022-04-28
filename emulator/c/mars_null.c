@@ -3,6 +3,7 @@
 #include <stdint.h> // for uint32_t, etc.
 
 #define decl(x) uint16_t MARS_##x() { return 4; }
+decl(dump)
 decl(SelfTest)
 decl(CapabilityGet)
 decl(SequenceHash)

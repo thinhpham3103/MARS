@@ -21,16 +21,6 @@
 #  define PROFILE_LEN_XKDF PROFILE_LEN_KSYM
 #endif
 
-static void hexout(const char *msg, const void *buf, uint16_t len)
-{
-typeof(len) i;
-    if (msg)
-        printf("%s: ", msg);
-    for (i=0; i<len; i++)
-        printf("%02x", ((uint8_t *)buf)[i]);
-    printf("\n");
-}
-
 #define MARS_LX 'X'
 #define MARS_LD 'D'
 #define MARS_LU 'U'
@@ -47,7 +37,6 @@ static uint8_t PS[PROFILE_LEN_KSYM] =
 #   error need another key
 #endif
 
-
 static uint8_t DP[PROFILE_LEN_KSYM];
 static uint8_t REG[PROFILE_COUNT_REG][PROFILE_LEN_DIGEST];
 
@@ -57,6 +46,28 @@ static profile_shc_t shc;   // Sequenced Hash Context
 // ---------------------------------------------------------
 
 #define CHECKRC if (rc) { printf("rc=%d, line=%d\n", rc, __LINE__); exit(rc); }
+
+static void hexout(const char *msg, const void *buf, uint16_t len)
+{
+typeof(len) i;
+    if (msg)
+        printf("%s: ", msg);
+    for (i=0; i<len; i++)
+        printf("%02x", ((uint8_t *)buf)[i]);
+    printf("\n");
+}
+
+void MARS_dump(void)
+{
+uint16_t i;
+    printf("--------------------------\n");
+    printf("MARS PRIVATE CONFIGURATION\n");
+    hexout(" PS", PS, sizeof(PS));
+    hexout(" DP", DP, sizeof(DP));
+    for (i=0; i<PROFILE_COUNT_REG; i++)
+        hexout("REG", REG[i], PROFILE_LEN_DIGEST);
+    printf("--------------------------\n");
+}
 
 CryptSnapshot(void * out, uint32_t regSelect, const void * ctx, uint16_t ctxlen)
 {
