@@ -38,6 +38,8 @@ uint16_t diglen, siglen, keylen, halg;
 
     MARS_Lock();
 
+    printf("SelfTest = %d\n", MARS_SelfTest(true));
+
     rc = MARS_CapabilityGet(MARS_PT_LEN_DIGEST, &diglen, sizeof(diglen));
     if (rc) {
         printf("usage: LD_PRELOAD=<mars.so> %s\n", argv[0]);

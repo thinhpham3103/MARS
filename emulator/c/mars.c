@@ -38,7 +38,16 @@ typeof(len) i;
 
 // MARS Device state ------------------------------------------
 
-static uint8_t PS[PROFILE_LEN_KSYM] = "A 16-byte secret";
+static uint8_t PS[PROFILE_LEN_KSYM] = 
+#if PROFILE_LEN_KSYM == 16
+    "A 16-byte secret";
+#elif PROFILE_LEN_KSYM == 32
+    "Here are thirty two secret bytes";
+#else
+#   error need another key
+#endif
+
+
 static uint8_t DP[PROFILE_LEN_KSYM];
 static uint8_t REG[PROFILE_COUNT_REG][PROFILE_LEN_DIGEST];
 

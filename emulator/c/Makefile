@@ -1,5 +1,5 @@
 BUILD ?= ../build
-ALL := demo mars_ascon.so mars_she.so mars_null.so
+ALL := demo mars_ascon.so mars_she.so mars_null.so mars_sha2.so
 ALLB := $(ALL:%=$(BUILD)/%)
 
 all: $(BUILD) $(ALLB)
@@ -18,6 +18,18 @@ $(BUILD)/mars_she.o: hw_she.h mars.c mars.h
 
 $(BUILD)/mars_she.so: $(BUILD)/mars_she.o $(BUILD)/hw_she.o $(BUILD)/aes.o
 	gcc -shared -o $@ $^
+
+
+
+
+$(BUILD)/hw_sha2.o: hw_sha2.c hw_sha2.h
+	gcc -fpic -o $@ -c $<
+
+$(BUILD)/mars_sha2.o: hw_sha2.h mars.c mars.h
+	gcc -o $@ -include $< -fpic -c mars.c
+
+$(BUILD)/mars_sha2.so: $(BUILD)/mars_sha2.o $(BUILD)/hw_sha2.o
+	gcc -shared -o $@ $^ -lcrypto
 
 
 
