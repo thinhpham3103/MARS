@@ -1,0 +1,36 @@
+#include <stdint.h> // for uint32_t, etc.
+#include <stdlib.h> // for size_t
+#include <stdbool.h> // for bool, true, false
+#include "../ascon/LibAscon-1.2.0/inc/ascon.h"
+
+// From TCG Algorithm Registry
+#define TPM_ALG_ERROR 0
+
+// note: mars.c contains defs for PROFILE_COUNT_REG and PROFILE_LEN_XKDF
+
+#define PROFILE_COUNT_PCR  4
+#define PROFILE_COUNT_TSR  0
+#define PROFILE_LEN_DIGEST ASCON_HASH_DIGEST_LEN
+#define PROFILE_LEN_SIGN   ASCON_AEAD_TAG_MIN_SECURE_LEN
+#define PROFILE_LEN_KSYM   ASCON_AEAD128_KEY_LEN
+#define PROFILE_LEN_KPUB   0
+#define PROFILE_LEN_KPRV   0
+#define PROFILE_ALG_HASH   0x81
+#define PROFILE_ALG_SIGN   0x82 // TODO - not in registry
+#define PROFILE_ALG_SKDF   0x83
+#define PROFILE_ALG_AKDF   TPM_ALG_ERROR
+
+#define CryptHash ascon_hash
+#define CryptHashInit ascon_hash_init
+#define CryptHashUpdate ascon_hash_update
+#define CryptHashFini ascon_hash_final
+#define CryptXkdf CryptSkdf
+
+typedef ascon_hash_ctx_t profile_shc_t;
+
+void CryptSkdf(void * key, const void * parent, char label, const void * ctx, uint16_t ctxlen);
+
+bool CryptVerify(const void *key, const void *dig, const void *sig);
+
+void CryptSign(void * out, const void * key, const void * digest);
+

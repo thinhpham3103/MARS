@@ -3,15 +3,17 @@
 # MARS Client Attester demo
 # T. Brostrom, Cyber Pack Ventures, Inc.
 
-# change hwmod to try different crypto algorithms
-
 import sys
 import socket
 import mars
 import cbor2 as cbor   # from https://travis-ci.com/agronholm/cbor2, v 5.1.2
 
+from sys import argv
+if len(argv) != 2:
+    print('Usage:', argv[0], '<hardware module>')
+    exit()
 from importlib import import_module
-hwmod='full'  # ascon, full, sha2, sha3, she
+hwmod = argv[1]
 hw = import_module('hw_' + hwmod)
 
 elog = []

@@ -40,11 +40,11 @@ def CryptSkdf(key, label, context):
 
 CryptAkdf = None
 
-def CryptSign(key, h):
-    return hmac.new(key, h.digest(), sha256).digest()
+def CryptSign(key, dig):
+    return hmac.new(key, dig, sha256).digest()
 
-def CryptVerify(key, msg, sig):
-    return sig == hmac.new(key, msg, sha256).digest()
+def CryptVerify(key, dig, sig):
+    return sig == CryptSign(key, dig)
 
 if __name__ == '__main__':
     print('Selftest', SelfTest())
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     dig = h.digest()
     print('dig =', dig.hex())
 
-    sig = CryptSign(ak, h)
+    sig = CryptSign(ak, dig)
     print('sig =', sig.hex())
 
     print('sig check', CryptVerify(ak, dig, sig))

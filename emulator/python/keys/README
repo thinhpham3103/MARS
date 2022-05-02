@@ -1,13 +1,11 @@
-To get the private/public AK keys:
-    print('AK PRV', mars.AK.export_key(format='PEM'))
-Copy output to: akprv.pem
-
-To get just the public AK key:
+To get the public AK key:
     pub = mars.PubRead(True, b'')
     pem = pub.export_key(format='PEM')
     print(pem)
     copy output to akpub.pem
-or
+or, get the private key and extract
+    print('AK PRV', mars.AK.export_key(format='PEM'))
+    Copy output to: akprv.pem
     openssl ec -in akprv.pem -pubout -out akpub.pem
 
 To sign a file, README --> sig.bin:

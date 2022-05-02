@@ -82,18 +82,17 @@ def cmac(K, msg):
 def CryptHash(msg):
     return hashmod.new(msg).digest()
 
-def CryptSign(key, h):
-    return cmac1(key, h.digest())
+CryptSign = cmac1
 
-def CryptVerify(k, dig, sig):
-    return sig == cmac1(k, dig)
+def CryptVerify(key, dig, sig):
+    return sig == CryptSign(key, dig)
 
 # Key Derivation Function
 def shekdf(K, C):
     return CryptHash(K + b'\x01\x01' + C + b'\x00')
 
-def CryptSkdf(k, x, y):
-    return shekdf(k, x + y)
+def CryptSkdf(key, x, y):
+    return shekdf(key, x + y)
 
 CryptAkdf = None
 
@@ -157,7 +156,7 @@ if __name__ == "__main__":
     # SIGN TESTS
     h = hashmod.new()
     h.update(b'check 1 2 3')
-    sig = CryptSign(K, h)
+    sig = CryptSign(K, h.digest())
 
     h = hashmod.new()
     h.update(b'check 1 2 3')
