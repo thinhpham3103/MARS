@@ -26,7 +26,7 @@
 typedef uint16_t MARS_RC;
 
 // MANAGEMENT
-
+#if 0
 MARS_RC MARS_SelfTest (bool fullTest);
 MARS_RC MARS_Lock ();
 MARS_RC MARS_Unlock ();
@@ -103,4 +103,19 @@ MARS_RC MARS_SignatureVerify (
     const void * dig,
     const void * sig,
     bool * result);
+#endif
 
+#define MARS_CC_SelfTest            0
+#define MARS_CC_CapabilityGet       1
+#define MARS_CC_SequenceHash        2
+#define MARS_CC_SequenceUpdate      3
+#define MARS_CC_SequenceComplete    4
+#define MARS_CC_PcrExtend           5
+#define MARS_CC_RegRead             6
+#define MARS_CC_Derive              7
+#define MARS_CC_DpDerive            8
+#define MARS_CC_PublicRead          9
+#define MARS_CC_Quote               10
+#define MARS_CC_Sign                11
+#define MARS_CC_SignatureVerify     12
+#define MARS_CC_LAST                12

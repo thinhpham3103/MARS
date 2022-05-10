@@ -40,7 +40,7 @@ static uint8_t PS[PROFILE_LEN_KSYM] =
 static uint8_t DP[PROFILE_LEN_KSYM];
 static uint8_t REG[PROFILE_COUNT_REG][PROFILE_LEN_DIGEST];
 
-static bool failure = false;
+bool failure = false;
 bool MARS_debug = false;
 static profile_shc_t shc;   // Sequenced Hash Context
 // ---------------------------------------------------------
