@@ -7,6 +7,7 @@
 #include "../tinycbor/src/cbor.h"
 
 // MZ state ------------------------------------------------
+// Initialized by _MZ_Init()
 
 static struct {
     pthread_mutex_t mx; // mutex for Lock and Unlock
@@ -58,7 +59,7 @@ MARS_RC MZ_Unlock()
 // 'h' is half word (16-bit) integer
 // 'x' is byte string taking 2 parameters, buffer pointer and length pointer
 // 1st ptype char is return type, or '-' for no returned data
-//      can use captial 'X' for buffer pointer and madatory length
+//      can use captial 'X' for buffer pointer and mandatory length
 //      1st char is processed by cbor_vget()
 // 2nd ptype char must be 'h' for the Command Code
 // remaining chars specify parameter types for the MARS Command
@@ -116,6 +117,7 @@ MARS_RC mz_xqt(const char *ptype, ...)
     if (err) {
         printf("VPUT err %d\n", err);
         cmdlen = 0;
+        rc = MARS_RC_IO;
     } else {
         cbor_encoder_close_container(&out, &array);
         cmdlen = cbor_encoder_get_buffer_size(&out, cmdblob);
@@ -152,87 +154,37 @@ MARS_RC mz_xqt(const char *ptype, ...)
     }
 
     va_end(ap);
-    return err;
+    return rc;
 }
 
 MARS_RC MZ_SelfTest (bool fullTest)
-{
-    return mz_xqt("-hb", MARS_CC_SelfTest, fullTest);
-}
+    { return mz_xqt("-hb", MARS_CC_SelfTest, fullTest); }
 
-MARS_RC MZ_CapabilityGet (
-    uint16_t pt,
-    void * cap,
-    uint16_t caplen)
-{
-    return mz_xqt("hhh", MARS_CC_CapabilityGet, pt, cap);
-}
-
+MARS_RC MZ_CapabilityGet ( uint16_t pt, void * cap, uint16_t caplen)
+    { return mz_xqt("hhh", MARS_CC_CapabilityGet, pt, cap); }
 
 MARS_RC MZ_SequenceHash ()
-{
-    return mz_xqt("-h", MARS_CC_SequenceHash);
-}
+{ return mz_xqt("-h", MARS_CC_SequenceHash); }
 
+MARS_RC MZ_SequenceUpdate( const void * in, size_t inlen, void * out, size_t * outlen_p)
+{ return mz_xqt("xhx", MARS_CC_SequenceUpdate, in, inlen, out, outlen_p); }
 
-MARS_RC MZ_SequenceUpdate(
-    const void * in,
-    size_t inlen,
-    void * out,
-    size_t * outlen_p)
-{
-    return mz_xqt("xhx", MARS_CC_SequenceUpdate, in, inlen, out, outlen_p);
-}
+MARS_RC MZ_SequenceComplete( void * out, size_t * outlen_p)
+{ return mz_xqt("xh", MARS_CC_SequenceComplete, out, outlen_p); }
 
+MARS_RC MZ_PcrExtend ( uint16_t pcrIndex, const void * dig)
+{ return mz_xqt("-hhx", MARS_CC_PcrExtend, pcrIndex, dig, mz.diglen); }
 
-MARS_RC MZ_SequenceComplete(
-    void * out,
-    size_t * outlen_p)
-{
-    return mz_xqt("xh", MARS_CC_SequenceComplete, out, outlen_p);
-}
+MARS_RC MZ_RegRead ( uint16_t regIndex, void * dig)
+{ return mz_xqt("Xhh", MARS_CC_RegRead, regIndex, dig, mz.diglen); }
 
+MARS_RC MZ_Derive ( uint32_t regSelect, const void * ctx, uint16_t ctxlen, void * out)
+{ return mz_xqt("Xhwx", MARS_CC_Derive, regSelect, ctx, ctxlen, out, mz.keylen); }
 
-MARS_RC MZ_PcrExtend (
-    uint16_t pcrIndex,
-    const void * dig)
-{
-    return mz_xqt("-hhx", MARS_CC_PcrExtend, pcrIndex, dig, mz.diglen);
-}
+MARS_RC MZ_DpDerive ( uint32_t regSelect, const void * ctx, uint16_t ctxlen)
+{ return mz_xqt("-hwx", MARS_CC_DpDerive, regSelect, ctx, ctxlen); }
 
-
-MARS_RC MZ_RegRead (
-    uint16_t regIndex,
-    void * dig)
-{
-    return mz_xqt("Xhh", MARS_CC_RegRead, regIndex, dig, mz.diglen);
-}
-
-
-// KEY MANAGEMENT
-
-MARS_RC MZ_Derive (
-    uint32_t regSelect,
-    const void * ctx,
-    uint16_t ctxlen,
-    void * out)
-{
-    return mz_xqt("Xhwx", MARS_CC_Derive, regSelect, ctx, ctxlen, out, mz.keylen);
-}
-
-MARS_RC MZ_DpDerive (
-    uint32_t regSelect,
-    const void * ctx,
-    uint16_t ctxlen)
-{
-    return mz_xqt("-hwx", MARS_CC_DpDerive, regSelect, ctx, ctxlen);
-}
-
-MARS_RC MZ_PublicRead (
-    bool restricted,
-    const void * ctx,
-    uint16_t ctxlen,
-    void * pub)
+MARS_RC MZ_PublicRead ( bool restricted, const void * ctx, uint16_t ctxlen, void * pub)
 {
     // return mz_xqt("xhbx", MARS_CC_PublicRead, 
     return MARS_RC_COMMAND;
@@ -249,14 +201,8 @@ MARS_RC MZ_Quote (
     return mz_xqt("Xhwxx", MARS_CC_Quote, regSelect, nonce, nlen, ctx, ctxlen, sig, mz.siglen);
 }
 
-MARS_RC MZ_Sign (
-    const void * ctx,
-    uint16_t ctxlen,
-    const void * dig,
-    void * sig)
-{
-    return mz_xqt("Xhxx", MARS_CC_Sign, ctx, ctxlen, dig, mz.diglen, sig, mz.siglen);
-}
+MARS_RC MZ_Sign ( const void * ctx, uint16_t ctxlen, const void * dig, void * sig)
+{ return mz_xqt("Xhxx", MARS_CC_Sign, ctx, ctxlen, dig, mz.diglen, sig, mz.siglen); }
 
 MARS_RC MZ_SignatureVerify (
     bool restricted,
@@ -282,9 +228,10 @@ bool err;
     err =  MZ_CapabilityGet(MARS_PT_LEN_DIGEST, &mz.diglen, sizeof(mz.diglen))
         || MZ_CapabilityGet(MARS_PT_LEN_SIGN, &mz.siglen, sizeof(mz.siglen))
         || MZ_CapabilityGet(MARS_PT_LEN_KSYM, &mz.keylen, sizeof(mz.keylen));
-    MZ_Unlock();
     if (err)
-        mz.tid = -1;
+        mz.tid = -1; // nothing can unlock
+    else
+        MZ_Unlock();
 }
 
 
