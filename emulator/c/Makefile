@@ -1,11 +1,11 @@
 BUILD ?= ../build
-ALL := demo mars_ascon.so mars_she.so mars_null.so mars_sha2.so mars_sha3.so disp
+ALL := demo mars_ascon.so mars_she.so mars_null.so mars_sha2.so mars_sha3.so api
 ALLB := $(ALL:%=$(BUILD)/%)
 
 all: $(BUILD) $(ALLB)
 
-$(BUILD)/disp: hw_sha2.h dispatcher.c $(BUILD)/mars_sha2.so
-	gcc -o $@ -include hw_sha2.h dispatcher.c $(BUILD)/mars_sha2.so ../build/libtinycbor.so
+$(BUILD)/api: api.c hw_sha2.h dispatcher.c $(BUILD)/mars_sha2.so
+	gcc -o $@ api.c -include hw_sha2.h dispatcher.c $(BUILD)/mars_sha2.so ../build/libtinycbor.so
 
 $(BUILD):
 	mkdir $@

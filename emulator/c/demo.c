@@ -98,6 +98,8 @@ uint8_t nonce[diglen];
     MARS_dump();
     MARS_DpDerive(0, "XYZZY", 5);
     MARS_dump();
+    MARS_Derive(1, "CompoundDeviceID", 16, id);
+    hexout("CDI2", id, sizeof(id));
 
     MARS_Unlock();
 }
