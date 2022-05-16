@@ -108,8 +108,7 @@ MARS_RC MARS_CapabilityGet (
     uint16_t caplen)
 {
     if (failure)   return MARS_RC_FAILURE;
-    if (!cap)      return MARS_RC_BUFFER;
-    if (caplen != sizeof(uint16_t))
+    if (!cap || caplen != sizeof(uint16_t))
         return MARS_RC_BUFFER;
     switch (pt)
         {
@@ -289,7 +288,7 @@ MARS_RC MARS_PublicRead (
     uint8_t key[PROFILE_LEN_KPRV];
     uint8_t label = restricted ? MARS_LR : MARS_LU;
     CryptAkdf(key, DP, label, ctx, ctxlen);
-    memcpy(pub, key, PROFILE_LEN_KPUB);
+    profile_copy_pub(pub, key);  // implementation dependent
     return MARS_RC_SUCCESS;
 #else
     return MARS_RC_COMMAND;

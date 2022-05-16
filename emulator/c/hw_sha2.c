@@ -33,6 +33,11 @@ uint8_t mac[PROFILE_LEN_SIGN];
 // Here, i is only 1.
 
 // from https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-108r1-draft.pdf
+
+// OpenSSL's KBKDF supports 800-108 Counter mode.
+// However, the value for L is taken from the parent key size.
+// No way to specify a different L (8192).
+
 void CryptSkdf(void * child, const void * parent, char label, const void * ctx, uint16_t ctxlen)
 {
 HMAC_CTX hctx;
@@ -41,13 +46,12 @@ extern bool MARS_debug;
     if (MARS_debug)
         label ^= 0x80;
     //  HMAC (key, [i]2 || Label || 0x00 || Context || [L]2) 
-    //  b'\x00\x00\x00\x01' + label + b'\x00' + context + b'\x00\x00\x20\x00'
     HMAC_Init(&hctx, parent, PROFILE_LEN_KSYM, EVP_sha256());
-    HMAC_Update(&hctx, "\x00\x00\x00\x01", 4);
-    HMAC_Update(&hctx, &label, 1);
-    HMAC_Update(&hctx, "", 1);
-    HMAC_Update(&hctx, ctx, ctxlen);
-    HMAC_Update(&hctx, "\x00\x00\x20\x00", 4);
+    HMAC_Update(&hctx, "\x00\x00\x00\x01", 4);  // i = 1
+    HMAC_Update(&hctx, &label, 1);              // Label
+    HMAC_Update(&hctx, "", 1);                  // 0x00
+    HMAC_Update(&hctx, ctx, ctxlen);            // Context
+    HMAC_Update(&hctx, "\x00\x00\x20\x00", 4);  // L = 0x2000 = 8192
     HMAC_Final(&hctx, child, 0);
     hexout("Skdf", child, PROFILE_LEN_KSYM);
 }
