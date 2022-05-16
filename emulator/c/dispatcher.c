@@ -7,7 +7,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "mars.h"
-#define MARS_RC_IO 99 // TODO add I/O or parsing RC
 #include "../tinycbor/src/cbor.h"
 
 extern bool failure;
