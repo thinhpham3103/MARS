@@ -203,9 +203,13 @@ uint16_t cap;
 
         case MARS_CC_DpDerive:
         xlen1 = sizeof(ctx);
-        rc = cbor_vget(&it, "wx", &regsel, &ctx, &xlen1)
+        rc = cbor_vget(&it, "w", &regsel)
             ? MARS_RC_IO
-            : MARS_DpDerive(regsel, ctx, xlen1);
+            : cbor_value_is_null(&it)
+                ? MARS_DpDerive(0, 0, 0)
+                : cbor_vget(&it, "x", &ctx, &xlen1)
+                    ? MARS_RC_IO
+                    : MARS_DpDerive(regsel, ctx, xlen1);
         cbor_encode_int(&array, rc);
         break;
 

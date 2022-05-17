@@ -108,7 +108,9 @@ MARS_RC mz_xqt(const char *ptype, ...)
         case 'x':               // byte string parameter
             va_get(xp);
             va_get(i);
-            err = cbor_encode_byte_string(&array, xp, i);
+            err = xp
+                ? cbor_encode_byte_string(&array, xp, i)
+                : cbor_encode_null(&array);
             break;
 
         default:
@@ -274,7 +276,7 @@ uint8_t nonce[diglen];
     hexout("PCR0", dig, sizeof(dig));
 
     MZ_Derive(1, "CompoundDeviceID", 16, id);
-    hexout("CDI", id, sizeof(id));
+    hexout("CDI1", id, sizeof(id));
 
     memset(nonce, 'Q', sizeof(nonce));
     MZ_Quote(/*regsel*/1<<0, nonce, sizeof(nonce), /*AK ctx*/"", /*ctxlen*/0, sig);
@@ -298,6 +300,10 @@ uint8_t nonce[diglen];
     MZ_DpDerive(0, "XYZZY", 5);
     MZ_Derive(1, "CompoundDeviceID", 16, id);
     hexout("CDI2", id, sizeof(id));
+
+    MZ_DpDerive(0, 0, 0);
+    MZ_Derive(1, "CompoundDeviceID", 16, id);
+    hexout("CDI1", id, sizeof(id));
 
     MZ_Unlock();
 }
