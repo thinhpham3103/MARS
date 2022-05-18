@@ -48,6 +48,42 @@ MARS_RC MZ_Unlock()
     return pthread_mutex_unlock(&mz.mx) ? MARS_RC_LOCK : MARS_RC_SUCCESS;
 }
 
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
+// send blob to MARS server, wait for reply
+size_t txrx(void *txbuf, size_t txlen, void *rxbuf, ssize_t rxlen)
+{
+    int sd;
+    struct sockaddr_in server_addr;
+    char server_message[100], client_message[100];
+    int server_struct_length = sizeof(server_addr);
+
+    // Create socket:
+    sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if(sd < 0)
+        return 0;
+
+    // Set port and IP:
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(0x4d5a); // MZ
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    // Send the message to server:
+    if(sendto(sd, txbuf, txlen, 0,
+            (struct sockaddr*)&server_addr, server_struct_length) < 0)
+        return 0;
+
+    // Receive the server's response:
+    if ((rxlen = recvfrom(sd, rxbuf, rxlen, 0,
+         (struct sockaddr*)&server_addr, &server_struct_length)) < 0)
+        return 0;
+
+    close(sd);
+    return rxlen;
+}
+
+
 // mz_xqt - Execute a MARS Command and write the reply
 // Writes command parameters to CBOR cmdblob,
 // sends cmdblob to dispatcher,
@@ -134,7 +170,8 @@ MARS_RC mz_xqt(const char *ptype, ...)
 
         // TODO send cmdblob to dispatcher, wait for and read rspblob
         rsplen = sizeof(rspblob);
-        dispatcher(cmdblob, cmdlen, rspblob, &rsplen);
+        // dispatcher(cmdblob, cmdlen, rspblob, &rsplen);
+        rsplen = txrx(cmdblob, cmdlen, rspblob, rsplen);
 
         // pretty print the response
         cbor_parser_init(rspblob, rsplen, 0, &parser, &it);
