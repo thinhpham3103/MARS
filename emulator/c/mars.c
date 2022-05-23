@@ -2,6 +2,9 @@
 #  error preinclude profile header using: gcc -include profile.h
 #endif
 
+// should be defined in the Profile hw_xxxx.h
+#define CryptDpInit() CryptSkdf(DP, PS, MARS_LD, MARS_debug ? "dbg" : "prd", 3)
+
 #include <string.h> // for memset()
 #include <stdio.h>
 #include <stdbool.h>
@@ -271,7 +274,7 @@ MARS_RC MARS_DpDerive (
         CryptSkdf(DP, DP, MARS_LD, snapshot, sizeof(snapshot));
         }
     else
-        CryptSkdf(DP, PS, MARS_LD, 0, 0);
+        CryptDpInit();
 
     return MARS_RC_SUCCESS;
 }
@@ -329,6 +332,7 @@ MARS_RC MARS_Sign (
         return MARS_RC_BUFFER;
 
     uint8_t key[PROFILE_LEN_XKDF];
+    // MARS_LU forces CryptXkdf to derive an unrestricted key
     CryptXkdf(key, DP, MARS_LU, ctx, ctxlen);
     CryptSign(sig, key, dig);
     return MARS_RC_SUCCESS;
@@ -363,7 +367,7 @@ void __attribute__((constructor)) _MARS_Init()
     // Init TSR to profile-specified values
     failure = false;
 
-    MARS_SelfTest(true);
-    MARS_DpDerive(0, 0, 0);     // initialize (reset) the DP
+    CryptSelfTest(false);
+    CryptDpInit();
     hexout("DP", DP, sizeof(DP));
 }
