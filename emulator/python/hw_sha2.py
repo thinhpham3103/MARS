@@ -17,7 +17,7 @@ class hashmod:
     def new(data=b''):
         return sha256(data)
 
-def SelfTest():
+def CryptSelfTest(fullTest):
     dig = hashmod.new(b'PYTHON').digest()
     exp = bytes.fromhex('329b3dcf798a73e8b87f486bcdaa8e2070f6437f1d470fec6e174ef8ec7b1554')
     return dig == exp
@@ -47,7 +47,7 @@ def CryptVerify(key, dig, sig):
     return sig == CryptSign(key, dig)
 
 if __name__ == '__main__':
-    print('Selftest', SelfTest())
+    print('Selftest', CryptSelfTest(True))
 
     secret = bytes.fromhex('101112131415161718191a1b1c1d1e1f101112131415161718191a1b1c1d1e1f')
     print('sec =', secret.hex())

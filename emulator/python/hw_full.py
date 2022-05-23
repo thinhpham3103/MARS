@@ -73,7 +73,7 @@ def CryptVerify(pub, dig, sig):
     # print('Good' if rc else 'bad')
     return rc
 
-def SelfTest():
+def CryptSelfTest(fullTest):
     dig = hashmod.new(b'PYTHON').digest()
     exp = bytes.fromhex('329b3dcf798a73e8b87f486bcdaa8e2070f6437f1d470fec6e174ef8ec7b1554')
     return dig == exp
@@ -82,7 +82,7 @@ def SelfTest():
 if __name__ == '__main__':
     from os import urandom
 
-    print('SelfTest:', SelfTest())
+    print('SelfTest:', CryptSelfTest(True))
 
     secret = bytes.fromhex('101112131415161718191a1b1c1d1e1f101112131415161718191a1b1c1d1e1f')
 

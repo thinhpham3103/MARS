@@ -45,9 +45,8 @@ class MARS_RoT:
         # init TSR
         self.failure = False
         self.Lock()
-        self.SelfTest(True)
-        # self.DP = self.hw.CryptSkdf(self.PS, b'D', b'')
-        self.DpDerive(0, None)
+        self.hw.CryptSelfTest(True)
+        self.CryptDpInit()
         self.Unlock()
         
 
@@ -59,8 +58,9 @@ class MARS_RoT:
 
     def SelfTest(self, fullTest):
         assert self.locked()
-        assert fullTest is True # partial not yet supported
-        return self.hw.SelfTest()
+        if not failure:
+            failure = not self.hw.CryptSelfTest(fullTest)
+        return not failure
 
     def Lock(self):
         assert not self.locked()
@@ -92,6 +92,9 @@ class MARS_RoT:
         for i in range(self.bsize):
             print(' PCR[' + str(i) + ']: ' + self.PCR[i].hex())
         print('--------------------------')
+
+    def CryptDpInit(self):
+        self.DP = self.hw.CryptSkdf(self.PS, b'D', b'dbg' if self.debug else b'prd')
 
     def CryptSnapshot(self, regsel, ctx):
         assert (regsel >> self.bsize) == 0   # no stray bits!
@@ -158,7 +161,8 @@ class MARS_RoT:
     def DpDerive(self, regsel, ctx):
         assert self.locked()
         if ctx == None:
-            self.DP = self.hw.CryptSkdf(self.PS, b'D', b'')
+            self.hw.CryptDpInit()
+            # self.DP = self.hw.CryptSkdf(self.PS, b'D', b'')
         else:
             snapshot = self.CryptSnapshot( regsel, ctx )
             self.DP = self.hw.CryptSkdf(self.DP, b'D', snapshot)

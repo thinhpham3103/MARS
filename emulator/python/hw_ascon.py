@@ -13,7 +13,7 @@ len_sign = 16
 len_skey = 16
 alg_hash = 0x80  # TPM_ALG_? ASCON_HASH
 
-def SelfTest():
+def CryptSelfTest(fullTest):
     return True # TODO: write some real tests
 
 # Simple hasher if update is not natively supported
