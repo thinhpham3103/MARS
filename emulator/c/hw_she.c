@@ -69,9 +69,6 @@ uint8_t mac[16];
 void SHE_kdf(void * key, const void * parent, char label, const void * ctx, uint16_t ctxlen)
 {
 she_hctx_t hctx;
-extern bool MARS_debug;
-    if (MARS_debug)
-        label ^= 0x80;
     SHE_hash_init(&hctx);
     SHE_hash_update(&hctx, parent, 16);
     SHE_hash_update(&hctx, "\x01\x01", 2);

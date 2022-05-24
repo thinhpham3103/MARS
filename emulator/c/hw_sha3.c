@@ -75,11 +75,6 @@ uint8_t sig2[PROFILE_LEN_SIGN];
 
 void CryptSkdf(void * child, const void * parent, char label, const void * ctx, uint16_t ctxlen)
 {
-extern bool MARS_debug;
-
-    if (MARS_debug)
-        label ^= 0x80;
-
     // return KMAC256.new(key=K, data=context, mac_len=L, custom=label).digest()
     do_kmac(ctx, ctxlen,              // in, in_len
             parent, PROFILE_LEN_KSYM, // key, keylen
