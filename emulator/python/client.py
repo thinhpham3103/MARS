@@ -67,7 +67,7 @@ print(' Nonce:', nonce.hex())
 print('pcrsel:', hex(pcrsel))
 
 mars.Lock()
-sig = mars.Quote(b'', pcrsel, nonce)
+sig = mars.Quote(pcrsel, nonce, b'')
 # must read pcrs AFTER quote, in case of dynamic pcrs
 pcrs = {i:mars.RegRead(i) for i in range(mars.bsize) if (1<<i)&pcrsel}
 mars.dump()

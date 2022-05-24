@@ -105,7 +105,6 @@ class MARS_RoT:
             if (1<<i) & regsel:
                 h.update(self.PCR[i])
         h.update(ctx)
-        if self.debug: print('snapshot:', h.digest().hex())
         return h.digest()
 
     # SEQUENCED PRIMITIVES
@@ -161,7 +160,7 @@ class MARS_RoT:
     def DpDerive(self, regsel, ctx):
         assert self.locked()
         if ctx == None:
-            self.hw.CryptDpInit()
+            self.CryptDpInit()
             # self.DP = self.hw.CryptSkdf(self.PS, b'D', b'')
         else:
             snapshot = self.CryptSnapshot( regsel, ctx )
@@ -176,7 +175,7 @@ class MARS_RoT:
 
     # ATTESTATION
 
-    def Quote(self, ctx, regsel, nonce):
+    def Quote(self, regsel, nonce, ctx):
         assert self.locked()
         snapshot = self.CryptSnapshot( regsel, nonce )
         AK = self.CryptXkdf(self.DP, b'R', ctx)
@@ -243,10 +242,10 @@ if __name__ == '__main__':
     print('CDI', cdi.hex())
 
     # nonce = urandom(16)
-    nonce = b'Q'*16
+    nonce = b'Q' * mars.hw.len_digest
 
     mars.Lock()
-    sig = mars.Quote(b'', 1<<0, nonce)
+    sig = mars.Quote(1<<0, nonce, b'')
     mars.Unlock()
     print('SIG ', sig.hex())
 
@@ -254,13 +253,19 @@ if __name__ == '__main__':
     mars.dump()
     mars.DpDerive(0, b'XYZZY')
     mars.dump()
-    sig = mars.Quote(b'', 1<<0, nonce)
+    sig = mars.Quote(1<<0, nonce, b'')
     print('SIG ', sig.hex())
 
     # dig = mars.CryptSnapshot(1<<0, nonce)
     dig = hw.CryptHash(b'\x00\x00\x00\x01' + mars.RegRead(0) + nonce)
     print('dig ', dig.hex())
     print('Verified? ', 'Success' if mars.SignatureVerify(True, b'', dig, sig) else 'FAIL')
+
+    cdi = mars.Derive(1, b'CompoundDeviceID')
+    print('CDI2', cdi.hex())
+    mars.DpDerive(0, None)
+    cdi = mars.Derive(1, b'CompoundDeviceID')
+    print('CDI1', cdi.hex())
 
     # IDevID tests
     print('IDevID signature test')
