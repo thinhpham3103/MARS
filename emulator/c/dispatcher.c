@@ -6,6 +6,10 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
 #include "mars.h"
 #include "../tinycbor/src/cbor.h"
 
@@ -20,7 +24,7 @@ typeof(len) i;
 }
 
 extern bool failure;
-CborError cbor_vget(CborValue *it, const char *ptype, ...);
+extern CborError cbor_vget(CborValue *it, const char *ptype, ...);
 
 // Extract MARS command and parameters from CBOR blob,
 // call the selected MARS_ command, and marshall the results
@@ -86,7 +90,7 @@ uint16_t cap;
             rc = MARS_RC_IO;
         else {
             uint8_t buf[xlen1];
-            uint16_t outlen = 0;
+            size_t outlen = 0;
             cbor_value_copy_byte_string (&it, buf, &xlen1, &it);
             rc = MARS_SequenceUpdate(buf, xlen1, 0, &outlen);
         }
@@ -200,9 +204,6 @@ uint16_t cap;
     *outlen_p = cbor_encoder_get_buffer_size(&enc, outblob);
 }
 
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
 // Overly simplified server that puts a datagram send/receive
 // in front of dispatcher().
 // TODO need an exclusive open to prevent interleaving
@@ -213,32 +214,32 @@ int main(void)
     char blob[2048];
     int client_struct_length = sizeof(client_addr);
     ssize_t inlen, outlen;
-    
+
     // Create UDP socket:
     sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    
+
     if(sd < 0){
         printf("Error while creating socket\n");
         return -1;
     }
-    
+
  // Set port and IP:
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(0x4d5a); // MZ
     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    
+
     // Bind to the set port and IP:
     if(bind(sd, (struct sockaddr*)&server_addr, sizeof(server_addr)) < 0){
         printf("Couldn't bind to the port\n");
         return -1;
     }
     printf("Listening on port %d...\n", server_addr.sin_port);
-    
+
     // Receive client's message:
     while ((inlen = recvfrom(sd, blob, sizeof(blob), 0,
          (struct sockaddr*)&client_addr, &client_struct_length)) >= 0) {
 
-        printf("\nReceived %d from IP: %s, port: %i\n", inlen,
+        printf("\nReceived %ld from IP: %s, port: %i\n", inlen,
                inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 
         outlen = sizeof(blob);
@@ -247,10 +248,10 @@ int main(void)
         sendto(sd, blob, outlen, 0,
                 (struct sockaddr*)&client_addr, client_struct_length);
     }
-    
+
     // Close the socket:
     close(sd);
-    
+
     return 0;
 }
 

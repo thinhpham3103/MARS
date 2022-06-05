@@ -9,14 +9,14 @@ typedef struct {
 #define TPM_ALG_ERROR 0
 #define TPM_ALG_HMAC 5
 #define TPM_ALG_SHA256 0xb
-#define TPM_ALG_KDF1_SP800_108 0x22  
+#define TPM_ALG_KDF1_SP800_108 0x22
 #define TPM_ALG_SHA3_256 0x27
 
 #define PROFILE_COUNT_PCR  4
 #define PROFILE_COUNT_TSR  0
 #define PROFILE_LEN_DIGEST 32 // EVP_MD_size(EVP_sha3_256())
-#define PROFILE_LEN_SIGN   PROFILE_LEN_DIGEST 
-#define PROFILE_LEN_KSYM   PROFILE_LEN_DIGEST 
+#define PROFILE_LEN_SIGN   PROFILE_LEN_DIGEST
+#define PROFILE_LEN_KSYM   PROFILE_LEN_DIGEST
 #define PROFILE_LEN_KPUB   0
 #define PROFILE_LEN_KPRV   0
 #define PROFILE_ALG_HASH   TPM_ALG_SHA3_256
@@ -24,12 +24,3 @@ typedef struct {
 #define PROFILE_ALG_SKDF   0x8b // ?? for new 800-108 w/ KMAC
 #define PROFILE_ALG_AKDF   TPM_ALG_ERROR
 
-#define CryptXkdf CryptSkdf
-
-void CryptHashInit(profile_shc_t *hctx);
-void CryptHashUpdate(profile_shc_t *hctx, const void *in, size_t inlen);
-void CryptHashFini(profile_shc_t *hctx, void *out);
-void CryptSign(void *sig, const void *key, const void *dig);
-bool CryptVerify(const void *key, const void *dig, const void *sig);
-void CryptSkdf(void * child, const void * parent, char label, const void * ctx, uint16_t ctxlen);
-bool CryptSelfTest(bool fullTest);

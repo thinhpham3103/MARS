@@ -1,3 +1,4 @@
+#pragma once
 #include <stdint.h> // for uint32_t, etc.
 #include <stdlib.h> // for size_t
 #include <stdbool.h> // for bool, true, false
@@ -20,14 +21,14 @@
 #define MARS_RC_LOCK	3   // MARS is not locked
 #define MARS_RC_BUFFER	4   // Invalid buffer pointer (null or misaligned) or length
 #define MARS_RC_COMMAND	5   // Command not supported
-#define MARS_RC_VALUE	6   // Value out of range or incorrect for context 
+#define MARS_RC_VALUE	6   // Value out of range or incorrect for context
 #define MARS_RC_REG     7   // Invalid register index specified
 #define MARS_RC_SEQ     8   // Not preceded by Sequence start command
 
 typedef uint16_t MARS_RC;
 
 // MANAGEMENT
-#if 0
+#if 1
 MARS_RC MARS_SelfTest (bool fullTest);
 MARS_RC MARS_Lock ();
 MARS_RC MARS_Unlock ();
