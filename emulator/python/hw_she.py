@@ -96,7 +96,7 @@ def CryptSkdf(key, x, y):
 
 CryptAkdf = None
 
-def SelfTest():
+def CryptSelfTest(fullTest):
     return True # TODO: write some real tests
 
 if __name__ == "__main__":

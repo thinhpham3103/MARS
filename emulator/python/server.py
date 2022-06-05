@@ -28,17 +28,17 @@ for mod in ( 'she', 'ascon', 'full', 'sha2', 'sha3' ):
 # ENDORSER CODE:
 # format is { mid:AK, ... }
 dev_db = { 
-           bytes.fromhex('7847c4bfdc78e1fa91a1b819b4a75ed8') : # ASCON
-           bytes.fromhex('12eea89fb0a5415da2c3b121be47f7d7'),
+           bytes.fromhex('502d653484f2759b48343c05f63617cf') : # ASCON
+           bytes.fromhex('9f2919b9e58914022b49768c61e27dda'),
 
-           bytes.fromhex('82a57db7ba29635fb325888136522788') : # SHA256
-           bytes.fromhex('c7dc6893829827db7ffd45528ccf86b83ddc9cd9c15124db9df1e30b419cff3f'),
+           bytes.fromhex('e54e09b0e16c3d9d846d0a135142bbe0') : # SHA2
+           bytes.fromhex('fbaf323decb56c8f523e01ab4c2f822b204c91585f980b03c4db3cd5ffa4829c'),
 
-           bytes.fromhex('418e0ca3c80b5bbbb91ea96daa4ec3f4') : # SHA3_256
-           bytes.fromhex('a65239023f86ee357cd97b6e0f64045cb922d70ed1c11c4cfc78a1a32c696658'),
+           bytes.fromhex('25ff163da07183077d1a671860cb6d32') : # SHA3
+           bytes.fromhex('8169b3420119bc8c185e3e52f0f51f12604b1d0eab77ed8566ed6748bcd56194'),
 
-           bytes.fromhex('b4b28f261159ad999f946ffa29026ead') : # SHE
-           bytes.fromhex('5c7f0e9a8b6a6c24f083f65f9e5e2902'),
+           bytes.fromhex('4b75937d8e9839e0ae1d4223eb5adba5') : # SHE
+           bytes.fromhex('8d307d371edd4e86d2e0f16013babf8a'),
          }
 
 # Check if digest is properly signed by mid's shared AK

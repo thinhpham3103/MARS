@@ -26,7 +26,7 @@ def CryptSign(key, dig):
 def CryptVerify(key, dig, sig):
     return sig == CryptSign(key, dig)
 
-def SelfTest():
+def CryptSelfTest(fullTest):
     res = CryptHash(b'PYTHON')
     exp = bytes.fromhex('6f5cb49ed7bccd9ce5b135dc8fa89523503216d0e3082307c80e4cd54c0e52d0')
     if res != exp:
@@ -43,7 +43,7 @@ def SelfTest():
 
 if __name__ == '__main__':
 
-    print('Selftest', SelfTest())
+    print('Selftest', CryptSelfTest(True))
 
     exp = CryptHash(b'this is a test')
     h = hashmod.new()

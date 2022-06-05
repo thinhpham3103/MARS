@@ -56,12 +56,9 @@ uint8_t nonce[ASCON_AEAD_NONCE_LEN];
 // Create a tag using label as nonce
 void CryptSkdf(void * key, const void * parent, char label, const void * ctx, uint16_t ctxlen)
 {
-const extern bool MARS_debug;
 // This use of nonce is probably wrong, due to need for some randomness?
 uint8_t nonce[ASCON_AEAD_NONCE_LEN];
 
-    if (MARS_debug)
-        label ^= 0x80;
     memset(nonce, 0, sizeof(nonce)); // pad for label
     nonce[0] = label;
 

@@ -45,9 +45,8 @@ class MARS_RoT:
         # init TSR
         self.failure = False
         self.Lock()
-        self.SelfTest(True)
-        # self.DP = self.hw.CryptSkdf(self.PS, b'D', b'')
-        self.DpDerive(0, None)
+        self.hw.CryptSelfTest(True)
+        self.CryptDpInit()
         self.Unlock()
         
 
@@ -59,8 +58,9 @@ class MARS_RoT:
 
     def SelfTest(self, fullTest):
         assert self.locked()
-        assert fullTest is True # partial not yet supported
-        return self.hw.SelfTest()
+        if not failure:
+            failure = not self.hw.CryptSelfTest(fullTest)
+        return not failure
 
     def Lock(self):
         assert not self.locked()
@@ -93,6 +93,9 @@ class MARS_RoT:
             print(' PCR[' + str(i) + ']: ' + self.PCR[i].hex())
         print('--------------------------')
 
+    def CryptDpInit(self):
+        self.DP = self.hw.CryptSkdf(self.PS, b'D', b'dbg' if self.debug else b'prd')
+
     def CryptSnapshot(self, regsel, ctx):
         assert (regsel >> self.bsize) == 0   # no stray bits!
         # TODO: Dynamic PCRs, if any, are written at this point
@@ -102,7 +105,6 @@ class MARS_RoT:
             if (1<<i) & regsel:
                 h.update(self.PCR[i])
         h.update(ctx)
-        if self.debug: print('snapshot:', h.digest().hex())
         return h.digest()
 
     # SEQUENCED PRIMITIVES
@@ -158,7 +160,8 @@ class MARS_RoT:
     def DpDerive(self, regsel, ctx):
         assert self.locked()
         if ctx == None:
-            self.DP = self.hw.CryptSkdf(self.PS, b'D', b'')
+            self.CryptDpInit()
+            # self.DP = self.hw.CryptSkdf(self.PS, b'D', b'')
         else:
             snapshot = self.CryptSnapshot( regsel, ctx )
             self.DP = self.hw.CryptSkdf(self.DP, b'D', snapshot)
@@ -172,7 +175,7 @@ class MARS_RoT:
 
     # ATTESTATION
 
-    def Quote(self, ctx, regsel, nonce):
+    def Quote(self, regsel, nonce, ctx):
         assert self.locked()
         snapshot = self.CryptSnapshot( regsel, nonce )
         AK = self.CryptXkdf(self.DP, b'R', ctx)
@@ -239,10 +242,10 @@ if __name__ == '__main__':
     print('CDI', cdi.hex())
 
     # nonce = urandom(16)
-    nonce = b'Q'*16
+    nonce = b'Q' * mars.hw.len_digest
 
     mars.Lock()
-    sig = mars.Quote(b'', 1<<0, nonce)
+    sig = mars.Quote(1<<0, nonce, b'')
     mars.Unlock()
     print('SIG ', sig.hex())
 
@@ -250,13 +253,19 @@ if __name__ == '__main__':
     mars.dump()
     mars.DpDerive(0, b'XYZZY')
     mars.dump()
-    sig = mars.Quote(b'', 1<<0, nonce)
+    sig = mars.Quote(1<<0, nonce, b'')
     print('SIG ', sig.hex())
 
     # dig = mars.CryptSnapshot(1<<0, nonce)
     dig = hw.CryptHash(b'\x00\x00\x00\x01' + mars.RegRead(0) + nonce)
     print('dig ', dig.hex())
     print('Verified? ', 'Success' if mars.SignatureVerify(True, b'', dig, sig) else 'FAIL')
+
+    cdi = mars.Derive(1, b'CompoundDeviceID')
+    print('CDI2', cdi.hex())
+    mars.DpDerive(0, None)
+    cdi = mars.Derive(1, b'CompoundDeviceID')
+    print('CDI1', cdi.hex())
 
     # IDevID tests
     print('IDevID signature test')

@@ -1,8 +1,16 @@
 BUILD ?= ../build
-ALL := demo mars_ascon.so mars_she.so mars_null.so mars_sha2.so mars_sha3.so
+ALL := demo mars_ascon.so mars_she.so mars_null.so mars_sha2.so mars_sha3.so api disp
+
 ALLB := $(ALL:%=$(BUILD)/%)
 
 all: $(BUILD) $(ALLB)
+
+$(BUILD)/api: api.c $(BUILD)/vget.o $(BUILD)/mars_sha2.so
+	gcc -o $@ $^ ../build/libtinycbor.so
+
+#$(BUILD)/disp: hw_sha2.h dispatcher.c $(BUILD)/mars_sha2.so
+$(BUILD)/disp: hw_sha2.h dispatcher.c $(BUILD)/vget.o $(BUILD)/mars_sha2.so
+	gcc -o $@ -include $^ ../build/libtinycbor.so
 
 $(BUILD):
 	mkdir $@
@@ -17,7 +25,7 @@ $(BUILD)/mars_she.o: hw_she.h mars.c mars.h
 	gcc -o $@ -include $< -fpic -c mars.c
 
 $(BUILD)/mars_she.so: $(BUILD)/mars_she.o $(BUILD)/hw_she.o $(BUILD)/aes.o
-	gcc -shared -o $@ $^
+	gcc -shared -o $@ $^ $(BUILD)/libtinycbor.so
 
 
 

@@ -41,10 +41,7 @@ uint8_t mac[PROFILE_LEN_SIGN];
 void CryptSkdf(void * child, const void * parent, char label, const void * ctx, uint16_t ctxlen)
 {
 HMAC_CTX hctx;
-extern bool MARS_debug;
 
-    if (MARS_debug)
-        label ^= 0x80;
     //  HMAC (key, [i]2 || Label || 0x00 || Context || [L]2) 
     HMAC_Init(&hctx, parent, PROFILE_LEN_KSYM, EVP_sha256());
     HMAC_Update(&hctx, "\x00\x00\x00\x01", 4);  // i = 1
