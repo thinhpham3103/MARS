@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include "hw_sha3.h"
+#include "mars_internal.h"
 
 void CryptHashInit(profile_shc_t *hctx)
 {
@@ -81,6 +82,11 @@ void CryptSkdf(void * child, const void * parent, char label, const void * ctx, 
             &label, 1,                // custom/label, len
             0,                        // xof_enabled
             child, PROFILE_LEN_KSYM); // out, outlen
+}
+
+void CryptXkdf(void *key, const void *parent, char label, const void *ctx, uint16_t ctxlen)
+{
+    CryptSkdf(key, parent, label, ctx, ctxlen);
 }
 
 bool CryptSelfTest(bool fullTest)

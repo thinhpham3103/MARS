@@ -32,7 +32,7 @@ MARS_RC MARS_Unlock()
 
 #define CHECKRC if (rc) { printf("rc=%d, line=%d\n", rc, __LINE__); exit(rc); }
 
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 MARS_RC rc;
 bool flag = 0;
@@ -119,4 +119,5 @@ uint8_t nonce[diglen];
 
 
     MARS_Unlock();
+    return 0;
 }

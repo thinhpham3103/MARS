@@ -26,6 +26,10 @@ SHA2:
 SHA3:
     Requires openssl (tested on 3.0)
 
+tinycbor:
+	source from https://github.com/intel/tinycbor
+	copy libtinycbor.so ../../build/
+
 make
 	executables --> ../build
 
@@ -62,7 +66,7 @@ CryptSign - signs a provided digest
 
 CryptVerify - determines if a signature is valid for the provided digest and the specified signing key
 
-CryptSkdf - derive a Symmetric key 
+CryptSkdf - derive a Symmetric key
 
 CryptAkdf - derive an Asymmetric key
 

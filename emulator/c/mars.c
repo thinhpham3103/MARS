@@ -5,11 +5,13 @@
 // should be defined in the Profile hw_xxxx.h
 #define CryptDpInit() CryptSkdf(DP, PS, MARS_LD, MARS_debug ? "dbg" : "prd", 3)
 
+#include <endian.h>
 #include <string.h> // for memset()
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include "mars.h"
+#include "mars_internal.h"
 
 #define PROFILE_COUNT_REG (PROFILE_COUNT_PCR + PROFILE_COUNT_TSR)
 
@@ -31,7 +33,7 @@
 
 // MARS Device state ------------------------------------------
 
-static uint8_t PS[PROFILE_LEN_KSYM] = 
+static uint8_t PS[PROFILE_LEN_KSYM] =
 #if PROFILE_LEN_KSYM == 16
     "A 16-byte secret";
 #elif PROFILE_LEN_KSYM == 32
@@ -72,16 +74,12 @@ uint16_t i;
     printf("--------------------------\n");
 }
 
-CryptSnapshot(void * out, uint32_t regSelect, const void * ctx, uint16_t ctxlen)
+void CryptSnapshot(void * out, uint32_t regSelect, const void * ctx, uint16_t ctxlen)
 {
 profile_shc_t shc;
 uint16_t i = 0;
 
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    uint32_t be_regsel = __builtin_bswap32 (regSelect);
-#else
-#   define be_regsel regSelect
-#endif
+    uint32_t be_regsel = htobe32(regSelect);
 
     // any TSRs in regSelect should be updated here
     // TSRs are in REG[PROFILE_COUNT_PCR ... PROFILE_COUNT_REG-1]

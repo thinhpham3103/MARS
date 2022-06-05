@@ -1,6 +1,7 @@
 #include <string.h> // for memset()
 #include "mars.h"
 #include "hw_ascon.h"
+#include "mars_internal.h"
 
 static ascon_hash_ctx_t shc;
 
@@ -73,6 +74,11 @@ uint8_t nonce[ASCON_AEAD_NONCE_LEN];
         /*tag-len*/ PROFILE_LEN_SIGN);
 }
 
+void CryptXkdf(void *key, const void *parent, char label, const void *ctx, uint16_t ctxlen)
+{
+    CryptSkdf(key, parent, label, ctx, ctxlen);
+}
+
 // Test vector from .../LibAscon-master/tst/vectors/hash.txt
 bool CryptSelfTest(bool fullTest)
 {
@@ -85,3 +91,22 @@ uint8_t exp[32] = { 0x80, 0x13, 0xEA, 0xAA, 0x19, 0x51, 0x58, 0x0A,
     return memcmp(dig, exp, sizeof(dig)) == 0;
 }
 
+void CryptHashInit(profile_shc_t *hctx)
+{
+    ascon_hash_init(hctx);
+}
+
+void CryptHashUpdate(profile_shc_t *hctx, const uint8_t *msg, size_t n)
+{
+    ascon_hash_update(hctx, msg, n);
+}
+
+void CryptHash(uint8_t *out, const void *msg, size_t n)
+{
+    ascon_hash(out, msg, n);
+}
+
+void CryptHashFini(profile_shc_t *hctx, void *dig)
+{
+    ascon_hash_final(hctx, dig);
+}

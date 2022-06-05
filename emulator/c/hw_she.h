@@ -1,3 +1,4 @@
+#pragma once
 #include <stdint.h> // for uint32_t, etc.
 #include <stdlib.h> // for size_t
 #include <stdbool.h> // for bool, true, false
@@ -19,16 +20,6 @@
 #define PROFILE_ALG_SIGN TPM_ALG_CMAC
 #define PROFILE_ALG_SKDF 0x86 // TODO - not approved
 #define PROFILE_ALG_AKDF TPM_ALG_ERROR
-
-#define CryptSelfTest SHE_selftest
-#define CryptHash SHE_hash
-#define CryptHashInit SHE_hash_init
-#define CryptHashUpdate SHE_hash_update
-#define CryptHashFini SHE_hash_fini
-#define CryptSign SHE_cmac1
-#define CryptVerify SHE_verify
-#define CryptSkdf SHE_kdf
-#define CryptXkdf CryptSkdf
 
 // hctx is Hash ConTeXt
 typedef struct {

@@ -12,6 +12,7 @@
 #include <stdbool.h>
 
 #include "hw_she.h"
+#include "mars_internal.h"
 
 static void hexout(const char *msg, const void *buf, size_t len)
 {
@@ -59,11 +60,21 @@ struct AES_ctx ctx;
     AES_ECB_encrypt(&ctx, mac);
 }
 
+void CryptSign(void *out, const void *key, const void *digest)
+{
+    SHE_cmac1((uint8_t *)out, (const uint8_t *)key, (const uint8_t *)digest);
+}
+
 bool SHE_verify(const void *key, const void *dig, const void *sig)
 {
 uint8_t mac[16];
     SHE_cmac1(mac, key, dig);
     return memcmp(mac, sig, 16) == 0;
+}
+
+bool CryptVerify(const void *key, const void *dig, const void *sig)
+{
+    return SHE_verify(key, dig, sig);
 }
 
 void SHE_kdf(void * key, const void * parent, char label, const void * ctx, uint16_t ctxlen)
@@ -76,6 +87,16 @@ she_hctx_t hctx;
     SHE_hash_update(&hctx, ctx, ctxlen);
     SHE_hash_update(&hctx, "", 1);
     SHE_hash_fini(&hctx, key);
+}
+
+void CryptSkdf(void * key, const void * parent, char label, const void * ctx, uint16_t ctxlen)
+{
+    SHE_kdf(key, parent, label, ctx, ctxlen);
+}
+
+void CryptXkdf(void * key, const void * parent, char label, const void * ctx, uint16_t ctxlen)
+{
+    CryptSkdf(key, parent, label, ctx, ctxlen);
 }
 
 
@@ -173,6 +194,26 @@ she_hctx_t hctx;
     SHE_hash_fini(&hctx, out);
 }
 
+void CryptHashInit(profile_shc_t *hctx)
+{
+    SHE_hash_init(hctx);
+}
+
+void CryptHashUpdate(profile_shc_t *hctx, const uint8_t * msg, size_t n)
+{
+    SHE_hash_update(hctx, msg, n);
+}
+
+void CryptHash(uint8_t *out, const void * msg, size_t n)
+{
+    SHE_hash(out, msg, n);
+}
+
+void CryptHashFini(profile_shc_t *hctx, void *dig)
+{
+    SHE_hash_fini(hctx, dig);
+}
+
 // These tests are from the AUTOSAR SHE spec, 4.13 Examples and Test Vectors
 // See https://www.autosar.org/fileadmin/user_upload/standards/foundation/20-11/AUTOSAR_TR_SecureHardwareExtensions.pdf
 bool SHE_selftest(bool fullTest)
@@ -204,3 +245,7 @@ uint8_t exp2[16] =  { 0x11, 0x8a, 0x46, 0x44, 0x7a, 0x77, 0x0d, 0x87,
     return true;
 }
 
+bool CryptSelfTest(bool fullTest)
+{
+    return SHE_selftest(fullTest);
+}

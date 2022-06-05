@@ -3,9 +3,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <sys/socket.h>
+
 #include "mars.h"
 #include "../tinycbor/src/cbor.h"
 
+extern CborError cbor_vget(CborValue *it, const char *ptype, ...);
 // MZ state ------------------------------------------------
 // Initialized by _MZ_Init()
 
@@ -162,7 +167,7 @@ MARS_RC mz_xqt(const char *ptype, ...)
 
         // pretty print the command
         CborParser parser;
-        CborValue it; 
+        CborValue it;
         cbor_parser_init(cmdblob, cmdlen, 0, &parser, &it);
         printf(" Command: ");
         cbor_value_to_pretty_advance(stdout, &it);
@@ -225,7 +230,7 @@ MARS_RC MZ_DpDerive ( uint32_t regSelect, const void * ctx, uint16_t ctxlen)
 
 MARS_RC MZ_PublicRead ( bool restricted, const void * ctx, uint16_t ctxlen, void * pub)
 {
-    // return mz_xqt("xhbx", MARS_CC_PublicRead, 
+    // return mz_xqt("xhbx", MARS_CC_PublicRead,
     return MARS_RC_COMMAND;
 }
 
@@ -274,7 +279,7 @@ bool err;
 }
 
 
-main() // see demo.c
+int main() // see demo.c
 {
 uint16_t cap;
 uint16_t halg;
