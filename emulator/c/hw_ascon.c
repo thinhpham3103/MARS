@@ -71,7 +71,7 @@ uint8_t nonce[ASCON_AEAD_NONCE_LEN];
         /*PT*/ 0,
         /*AD-len*/ ctxlen,
         /*PT-LEN*/ 0,
-        /*tag-len*/ PROFILE_LEN_SIGN);
+        /*tag-len*/ PROFILE_LEN_KSYM);
 }
 
 void CryptXkdf(void *key, const void *parent, char label, const void *ctx, uint16_t ctxlen)
