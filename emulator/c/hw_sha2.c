@@ -66,7 +66,7 @@ void CryptHashInit(profile_shc_t *hctx)
     SHA256_Init(hctx);
 }
 
-void CryptHashUpdate(profile_shc_t *hctx, const uint8_t *msg, size_t n)
+void CryptHashUpdate(profile_shc_t *hctx, const void *msg, size_t n)
 {
     SHA256_Update(hctx, msg, n);
 }

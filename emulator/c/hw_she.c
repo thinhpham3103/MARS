@@ -199,7 +199,7 @@ void CryptHashInit(profile_shc_t *hctx)
     SHE_hash_init(hctx);
 }
 
-void CryptHashUpdate(profile_shc_t *hctx, const uint8_t * msg, size_t n)
+void CryptHashUpdate(profile_shc_t *hctx, const void * msg, size_t n)
 {
     SHE_hash_update(hctx, msg, n);
 }

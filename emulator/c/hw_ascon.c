@@ -96,7 +96,7 @@ void CryptHashInit(profile_shc_t *hctx)
     ascon_hash_init(hctx);
 }
 
-void CryptHashUpdate(profile_shc_t *hctx, const uint8_t *msg, size_t n)
+void CryptHashUpdate(profile_shc_t *hctx, const void *msg, size_t n)
 {
     ascon_hash_update(hctx, msg, n);
 }

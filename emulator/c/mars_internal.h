@@ -12,6 +12,6 @@ bool CryptSelfTest(bool fullTest);
 
 // Prior include HW definition should provide defintion of `profile_shc_t`
 void CryptHashInit(profile_shc_t *hctx);
-void CryptHashUpdate(profile_shc_t *hctx, const uint8_t *msg, size_t n);
+void CryptHashUpdate(profile_shc_t *hctx, const void *msg, size_t n);
 void CryptHash(uint8_t *out, const void *msg, size_t n);
 void CryptHashFinal(profile_shc_t *hctx, void *dig);
