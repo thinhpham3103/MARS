@@ -42,7 +42,7 @@ uint8_t mac[PROFILE_LEN_SIGN];
 
 void CryptSkdf(void * child, const void * parent, char label, const void * ctx, uint16_t ctxlen)
 {
-
+#warning "using deprecated HMAC functions"
     HMAC_CTX *hctx = HMAC_CTX_new();
     //  HMAC (key, [i]2 || Label || 0x00 || Context || [L]2)
     HMAC_Init_ex(hctx, parent, PROFILE_LEN_KSYM, EVP_sha256(), NULL);

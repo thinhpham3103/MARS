@@ -5,6 +5,15 @@ ALLB := $(ALL:%=$(BUILD)/%)
 
 all: $(BUILD) $(ALLB)
 
+OSL3DIR := ../openssl/openssl-openssl-3.0
+ifneq ($(wildcard $(OSL3DIR)), )
+    OSL3INC := -I $(OSL3DIR)/include -Wno-deprecated-declarations
+    OSL3LIB := $(OSL3DIR)/libcrypto.so
+else
+    OSL3INC := -Wno-deprecated-declarations
+    OSL3LIB := -lcrypto
+endif
+
 $(BUILD)/api: api.c $(BUILD)/vget.o $(BUILD)/mars_sha2.so
 	gcc -o $@ $^ ../build/libtinycbor.so
 
@@ -31,27 +40,23 @@ $(BUILD)/mars_she.so: $(BUILD)/mars_she.o $(BUILD)/hw_she.o $(BUILD)/aes.o
 
 
 $(BUILD)/hw_sha2.o: hw_sha2.c hw_sha2.h
-	gcc -fpic -o $@ -c $<
+	gcc -fpic -o $@ -c $< $(OSL3INC)
 
 $(BUILD)/mars_sha2.o: hw_sha2.h mars.c mars.h
 	gcc -o $@ -include $< -fpic -c mars.c
 
 $(BUILD)/mars_sha2.so: $(BUILD)/mars_sha2.o $(BUILD)/hw_sha2.o
-	gcc -shared -o $@ $^ -lcrypto
+	gcc -shared -o $@ $^ $(OSL3LIB)
 
-
-
-OSL3 := ../openssl/openssl-openssl-3.0
 
 $(BUILD)/hw_sha3.o: hw_sha3.c hw_sha3.h
-	gcc -fpic -o $@ -c $< -I $(OSL3)/include
+	gcc -fpic -o $@ -c $< $(OSL3INC)
 
 $(BUILD)/mars_sha3.o: hw_sha3.h mars.c mars.h
 	gcc -o $@ -include $< -fpic -c mars.c
 
 $(BUILD)/mars_sha3.so: $(BUILD)/mars_sha3.o $(BUILD)/hw_sha3.o
-	gcc -shared -o $@ $^ $(OSL3)/libcrypto.so
-	echo Ensure that LD_LIBRARY_PATH includes $(OSL3)
+	gcc -shared -o $@ $^ $(OSL3LIB)
 
 
 $(BUILD)/hw_ascon.o: hw_ascon.c hw_ascon.h
