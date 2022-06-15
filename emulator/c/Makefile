@@ -5,7 +5,7 @@ ALLB := $(ALL:%=$(BUILD)/%)
 
 all: $(BUILD) $(ALLB)
 
-OSL3DIR := ../openssl/openssl-openssl-3.0
+OSL3DIR ?= ../openssl/openssl-openssl-3.0
 ifneq ($(wildcard $(OSL3DIR)), )
     OSL3INC := -I $(OSL3DIR)/include -Wno-deprecated-declarations
     OSL3LIB := $(OSL3DIR)/libcrypto.so
