@@ -71,7 +71,7 @@ void CryptHashUpdate(profile_shc_t *hctx, const uint8_t *msg, size_t n)
     SHA256_Update(hctx, msg, n);
 }
 
-void CryptHashFini(profile_shc_t *hctx, void *dig)
+void CryptHashFinal(profile_shc_t *hctx, void *dig)
 {
     SHA256_Final(dig, hctx);
 }
@@ -88,6 +88,6 @@ uint8_t dig[PROFILE_LEN_DIGEST];
 uint8_t exp[PROFILE_LEN_DIGEST] = "\x32\x9b\x3d\xcf\x79\x8a\x73\xe8\xb8\x7f\x48\x6b\xcd\xaa\x8e\x20\x70\xf6\x43\x7f\x1d\x47\x0f\xec\x6e\x17\x4e\xf8\xec\x7b\x15\x54";
     CryptHashInit(&hctx);
     CryptHashUpdate(&hctx, "PYTHON", 6);
-    CryptHashFini(&hctx, dig);
+    CryptHashFinal(&hctx, dig);
     return memcmp(dig, exp, PROFILE_LEN_DIGEST) == 0;
 }

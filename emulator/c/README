@@ -26,10 +26,6 @@ SHA2:
 SHA3:
     Requires openssl (tested on 3.0)
 
-tinycbor:
-	source from https://github.com/intel/tinycbor
-	copy libtinycbor.so ../../build/
-
 make
 	executables --> ../build
 
@@ -59,14 +55,14 @@ ARCHITECTURE.CRYPT PRIMITIVES
 
 These so-called "crypt" primitives are those required by MARS. They are documented in the MARS Library Specification as Support Functions. "Crypt" functions are constructed using the base algorithms.  Those functions share a common prefix and are named:
 
-CryptHashInit, CryptHashUpdate, CryptHashFini
+CryptHashInit, CryptHashUpdate, CryptHashFinal
 - produce a fixed-size digest as a result of hashing variable length input
 
 CryptSign - signs a provided digest
 
 CryptVerify - determines if a signature is valid for the provided digest and the specified signing key
 
-CryptSkdf - derive a Symmetric key
+CryptSkdf - derive a Symmetric key 
 
 CryptAkdf - derive an Asymmetric key
 

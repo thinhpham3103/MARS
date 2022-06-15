@@ -92,7 +92,7 @@ uint16_t i = 0;
     while (++i<PROFILE_COUNT_REG && (regSelect>>=1));
 
     CryptHashUpdate(&shc, ctx, ctxlen);
-    CryptHashFini(&shc, out);
+    CryptHashFinal(&shc, out);
 }
 
 MARS_RC MARS_SelfTest (
@@ -197,7 +197,7 @@ MARS_RC MARS_SequenceComplete(
         return MARS_RC_BUFFER;
 //  if (!hash_sequence_in_progress)
 //      return MARS_RC_SEQ;
-    CryptHashFini(&shc, out);
+    CryptHashFinal(&shc, out);
     *outlen = PROFILE_LEN_DIGEST;
     return MARS_RC_SUCCESS;
 }
@@ -215,7 +215,7 @@ MARS_RC MARS_PcrExtend (
     CryptHashInit(&shc);
     CryptHashUpdate(&shc, REG[pcrIndex], PROFILE_LEN_DIGEST);
     CryptHashUpdate(&shc, dig, PROFILE_LEN_DIGEST);
-    CryptHashFini(&shc, REG[pcrIndex]);
+    CryptHashFinal(&shc, REG[pcrIndex]);
     return MARS_RC_SUCCESS;
 }
 

@@ -106,7 +106,7 @@ void CryptHash(uint8_t *out, const void *msg, size_t n)
     ascon_hash(out, msg, n);
 }
 
-void CryptHashFini(profile_shc_t *hctx, void *dig)
+void CryptHashFinal(profile_shc_t *hctx, void *dig)
 {
     ascon_hash_final(hctx, dig);
 }

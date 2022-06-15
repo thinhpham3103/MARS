@@ -14,4 +14,4 @@ bool CryptSelfTest(bool fullTest);
 void CryptHashInit(profile_shc_t *hctx);
 void CryptHashUpdate(profile_shc_t *hctx, const uint8_t *msg, size_t n);
 void CryptHash(uint8_t *out, const void *msg, size_t n);
-void CryptHashFini(profile_shc_t *hctx, void *dig);
+void CryptHashFinal(profile_shc_t *hctx, void *dig);

@@ -19,7 +19,7 @@ void CryptHashUpdate(profile_shc_t *hctx, const void *in, size_t inlen)
     EVP_DigestUpdate(hctx->mdctx, in, inlen);
 }
 
-void CryptHashFini(profile_shc_t *hctx, void *out)
+void CryptHashFinal(profile_shc_t *hctx, void *out)
 {
 unsigned int outlen;
 
