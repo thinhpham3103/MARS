@@ -18,6 +18,8 @@ static struct {
     pthread_mutex_t mx; // mutex for Lock and Unlock
     pthread_t tid;      // thread ID of mx lock owner; 0 if unlocked
     uint16_t diglen, siglen, keylen;
+    MARS_ApiIoCb txrx;
+    void * txrx_ctx;
 } mz;
 
 // ---------------------------------------------------------
@@ -52,8 +54,6 @@ MARS_RC MARS_Unlock()
     mz.tid = 0;
     return pthread_mutex_unlock(&mz.mx) ? MARS_RC_LOCK : MARS_RC_SUCCESS;
 }
-
-size_t txrx(void *ctx, void *txbuf, size_t txlen, void *rxbuf, ssize_t rxlen);
 
 // mz_xqt - Execute a MARS Command and write the reply
 // Writes command parameters to CBOR cmdblob,
@@ -142,7 +142,7 @@ MARS_RC mz_xqt(const char *ptype, ...)
         // TODO send cmdblob to dispatcher, wait for and read rspblob
         rsplen = sizeof(rspblob);
         // dispatcher(cmdblob, cmdlen, rspblob, &rsplen);
-        rsplen = txrx(0, cmdblob, cmdlen, rspblob, rsplen);
+        rsplen = mz.txrx(mz.txrx_ctx, cmdblob, cmdlen, rspblob, rsplen);
 
         // pretty print the response
         cbor_parser_init(rspblob, rsplen, 0, &parser, &it);
@@ -227,22 +227,23 @@ MARS_RC MARS_SignatureVerify (
 }
 
 
-// TODO add txrx + ctx to params
-
-// Invoked by dlopen()
-void __attribute__((constructor)) _MARS_Init()
+MARS_RC MARS_ApiInit(MARS_ApiIoCb txrx, void *txrx_ctx)
 {
 bool err;
-    printf("MARS_Init\n");
+    printf("MARS_ApiInit\n");
     pthread_mutex_init(&mz.mx, NULL);
     mz.tid = 0;   // thread ID of mx lock owner; 0 if unlocked
     MARS_Lock();
+    mz.txrx = txrx;
+    mz.txrx_ctx = txrx_ctx;
     err =  MARS_CapabilityGet(MARS_PT_LEN_DIGEST, &mz.diglen, sizeof(mz.diglen))
         || MARS_CapabilityGet(MARS_PT_LEN_SIGN, &mz.siglen, sizeof(mz.siglen))
         || MARS_CapabilityGet(MARS_PT_LEN_KSYM, &mz.keylen, sizeof(mz.keylen));
-    if (err)
+    if (err) {
         mz.tid = -1; // nothing can unlock
-    else
-        MARS_Unlock();
+        return MARS_RC_IO;
+    }
+    MARS_Unlock();
+    return MARS_RC_SUCCESS;
 }
 

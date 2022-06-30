@@ -41,13 +41,13 @@ size_t txrx(void *ctx, void *txbuf, size_t txlen, void *rxbuf, ssize_t rxlen)
     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     // Send the message to server:
-    if(sendto(sd, txbuf, txlen, 0,
-            (struct sockaddr*)&server_addr, server_struct_length) < 0)
+    if (txlen != sendto(sd, txbuf, txlen, 0,
+            (struct sockaddr*)&server_addr, server_struct_length))
         return 0;
 
     // Receive the server's response:
     if ((rxlen = recvfrom(sd, rxbuf, rxlen, 0,
-         (struct sockaddr*)&server_addr, &server_struct_length)) < 0)
+            (struct sockaddr*)&server_addr, &server_struct_length)) < 0)
         return 0;
 
     close(sd);
@@ -63,7 +63,7 @@ size_t outlen;
 uint16_t diglen, siglen, keylen;
 bool flag;
 
-    // MARS_ApiInit();
+    MARS_ApiInit(txrx, 0);
 
     MARS_Lock();
     MARS_SelfTest(true);
