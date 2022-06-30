@@ -7,12 +7,12 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-#include "mars.h"
+#include "api.h"
 #include "../tinycbor/src/cbor.h"
 
 extern CborError cbor_vget(CborValue *it, const char *ptype, ...);
-// MZ state ------------------------------------------------
-// Initialized by _MZ_Init()
+// MARS state ------------------------------------------------
+// Initialized by _MARS_Init()
 
 static struct {
     pthread_mutex_t mx; // mutex for Lock and Unlock
@@ -38,7 +38,7 @@ static bool mz_locked()
     return mz.tid == pthread_self();
 }
 
-MARS_RC MZ_Lock()
+MARS_RC MARS_Lock()
 {
     if (mz_locked() || pthread_mutex_lock(&mz.mx))
         return MARS_RC_LOCK;
@@ -46,48 +46,14 @@ MARS_RC MZ_Lock()
     return MARS_RC_SUCCESS;
 }
 
-MARS_RC MZ_Unlock()
+MARS_RC MARS_Unlock()
 {
     if (!mz_locked()) return MARS_RC_LOCK;
     mz.tid = 0;
     return pthread_mutex_unlock(&mz.mx) ? MARS_RC_LOCK : MARS_RC_SUCCESS;
 }
 
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
-// send blob to MARS server, wait for reply
-size_t txrx(void *txbuf, size_t txlen, void *rxbuf, ssize_t rxlen)
-{
-    int sd;
-    struct sockaddr_in server_addr;
-    char server_message[100], client_message[100];
-    int server_struct_length = sizeof(server_addr);
-
-    // Create socket:
-    sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if(sd < 0)
-        return 0;
-
-    // Set port and IP:
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(0x4d5a); // MZ
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-    // Send the message to server:
-    if(sendto(sd, txbuf, txlen, 0,
-            (struct sockaddr*)&server_addr, server_struct_length) < 0)
-        return 0;
-
-    // Receive the server's response:
-    if ((rxlen = recvfrom(sd, rxbuf, rxlen, 0,
-         (struct sockaddr*)&server_addr, &server_struct_length)) < 0)
-        return 0;
-
-    close(sd);
-    return rxlen;
-}
-
+size_t txrx(void *ctx, void *txbuf, size_t txlen, void *rxbuf, ssize_t rxlen);
 
 // mz_xqt - Execute a MARS Command and write the reply
 // Writes command parameters to CBOR cmdblob,
@@ -176,7 +142,7 @@ MARS_RC mz_xqt(const char *ptype, ...)
         // TODO send cmdblob to dispatcher, wait for and read rspblob
         rsplen = sizeof(rspblob);
         // dispatcher(cmdblob, cmdlen, rspblob, &rsplen);
-        rsplen = txrx(cmdblob, cmdlen, rspblob, rsplen);
+        rsplen = txrx(0, cmdblob, cmdlen, rspblob, rsplen);
 
         // pretty print the response
         cbor_parser_init(rspblob, rsplen, 0, &parser, &it);
@@ -201,40 +167,40 @@ MARS_RC mz_xqt(const char *ptype, ...)
     return rc;
 }
 
-MARS_RC MZ_SelfTest (bool fullTest)
+MARS_RC MARS_SelfTest (bool fullTest)
     { return mz_xqt("-hb", MARS_CC_SelfTest, fullTest); }
 
-MARS_RC MZ_CapabilityGet ( uint16_t pt, void * cap, uint16_t caplen)
+MARS_RC MARS_CapabilityGet ( uint16_t pt, void * cap, uint16_t caplen)
     { return mz_xqt("hhh", MARS_CC_CapabilityGet, pt, cap); }
 
-MARS_RC MZ_SequenceHash ()
+MARS_RC MARS_SequenceHash ()
 { return mz_xqt("-h", MARS_CC_SequenceHash); }
 
-MARS_RC MZ_SequenceUpdate( const void * in, size_t inlen, void * out, size_t * outlen_p)
+MARS_RC MARS_SequenceUpdate( const void * in, size_t inlen, void * out, size_t * outlen_p)
 { return mz_xqt("xhx", MARS_CC_SequenceUpdate, in, inlen, out, outlen_p); }
 
-MARS_RC MZ_SequenceComplete( void * out, size_t * outlen_p)
+MARS_RC MARS_SequenceComplete( void * out, size_t * outlen_p)
 { return mz_xqt("xh", MARS_CC_SequenceComplete, out, outlen_p); }
 
-MARS_RC MZ_PcrExtend ( uint16_t pcrIndex, const void * dig)
+MARS_RC MARS_PcrExtend ( uint16_t pcrIndex, const void * dig)
 { return mz_xqt("-hhx", MARS_CC_PcrExtend, pcrIndex, dig, mz.diglen); }
 
-MARS_RC MZ_RegRead ( uint16_t regIndex, void * dig)
+MARS_RC MARS_RegRead ( uint16_t regIndex, void * dig)
 { return mz_xqt("Xhh", MARS_CC_RegRead, regIndex, dig, mz.diglen); }
 
-MARS_RC MZ_Derive ( uint32_t regSelect, const void * ctx, uint16_t ctxlen, void * out)
+MARS_RC MARS_Derive ( uint32_t regSelect, const void * ctx, uint16_t ctxlen, void * out)
 { return mz_xqt("Xhwx", MARS_CC_Derive, regSelect, ctx, ctxlen, out, mz.keylen); }
 
-MARS_RC MZ_DpDerive ( uint32_t regSelect, const void * ctx, uint16_t ctxlen)
+MARS_RC MARS_DpDerive ( uint32_t regSelect, const void * ctx, uint16_t ctxlen)
 { return mz_xqt("-hwx", MARS_CC_DpDerive, regSelect, ctx, ctxlen); }
 
-MARS_RC MZ_PublicRead ( bool restricted, const void * ctx, uint16_t ctxlen, void * pub)
+MARS_RC MARS_PublicRead ( bool restricted, const void * ctx, uint16_t ctxlen, void * pub)
 {
     // return mz_xqt("xhbx", MARS_CC_PublicRead,
     return MARS_RC_COMMAND;
 }
 
-MARS_RC MZ_Quote (
+MARS_RC MARS_Quote (
     uint32_t regSelect,
     const void * nonce,
     uint16_t nlen,
@@ -245,10 +211,10 @@ MARS_RC MZ_Quote (
     return mz_xqt("Xhwxx", MARS_CC_Quote, regSelect, nonce, nlen, ctx, ctxlen, sig, mz.siglen);
 }
 
-MARS_RC MZ_Sign ( const void * ctx, uint16_t ctxlen, const void * dig, void * sig)
+MARS_RC MARS_Sign ( const void * ctx, uint16_t ctxlen, const void * dig, void * sig)
 { return mz_xqt("Xhxx", MARS_CC_Sign, ctx, ctxlen, dig, mz.diglen, sig, mz.siglen); }
 
-MARS_RC MZ_SignatureVerify (
+MARS_RC MARS_SignatureVerify (
     bool restricted,
     const void * ctx,
     uint16_t ctxlen,
@@ -261,91 +227,22 @@ MARS_RC MZ_SignatureVerify (
 }
 
 
+// TODO add txrx + ctx to params
+
 // Invoked by dlopen()
-void __attribute__((constructor)) _MZ_Init()
+void __attribute__((constructor)) _MARS_Init()
 {
 bool err;
-    printf("MZ_Init\n");
+    printf("MARS_Init\n");
     pthread_mutex_init(&mz.mx, NULL);
     mz.tid = 0;   // thread ID of mx lock owner; 0 if unlocked
-    MZ_Lock();
-    err =  MZ_CapabilityGet(MARS_PT_LEN_DIGEST, &mz.diglen, sizeof(mz.diglen))
-        || MZ_CapabilityGet(MARS_PT_LEN_SIGN, &mz.siglen, sizeof(mz.siglen))
-        || MZ_CapabilityGet(MARS_PT_LEN_KSYM, &mz.keylen, sizeof(mz.keylen));
+    MARS_Lock();
+    err =  MARS_CapabilityGet(MARS_PT_LEN_DIGEST, &mz.diglen, sizeof(mz.diglen))
+        || MARS_CapabilityGet(MARS_PT_LEN_SIGN, &mz.siglen, sizeof(mz.siglen))
+        || MARS_CapabilityGet(MARS_PT_LEN_KSYM, &mz.keylen, sizeof(mz.keylen));
     if (err)
         mz.tid = -1; // nothing can unlock
     else
-        MZ_Unlock();
+        MARS_Unlock();
 }
 
-
-int main() // see demo.c
-{
-uint16_t cap;
-uint16_t halg;
-size_t outlen;
-uint16_t diglen, siglen, keylen;
-bool flag;
-
-    MZ_Lock();
-    MZ_SelfTest(true);
-    MZ_CapabilityGet(MARS_PT_LEN_DIGEST, &diglen, sizeof(diglen));
-    MZ_CapabilityGet(MARS_PT_LEN_SIGN, &siglen, sizeof(siglen));
-    MZ_CapabilityGet(MARS_PT_LEN_KSYM, &keylen, sizeof(keylen));
-    MZ_CapabilityGet(MARS_PT_ALG_HASH, &halg, sizeof(halg));
-
-    printf("diglen = %d\n", diglen);
-    printf("siglen = %d\n", mz.siglen);
-    printf("keylen = %d\n", keylen);
-    printf("Hash alg = 0x%x\n", halg);
-
-uint8_t dig[diglen];
-uint8_t sig[siglen];
-uint8_t id[keylen];
-uint8_t nonce[diglen];
-
-    char msg1[] = "this is a test";
-    MZ_SequenceHash();
-    outlen = 0;
-    MZ_SequenceUpdate(msg1, sizeof(msg1)-1, 0, &outlen);
-    outlen = sizeof(dig);
-    MZ_SequenceComplete(dig, &outlen);
-
-    hexout("dig", dig, outlen);
-
-    MZ_PcrExtend(0, dig);
-    MZ_RegRead(0, dig);
-    hexout("PCR0", dig, sizeof(dig));
-
-    MZ_Derive(1, "CompoundDeviceID", 16, id);
-    hexout("CDI1", id, sizeof(id));
-
-    memset(nonce, 'Q', sizeof(nonce));
-    MZ_Quote(/*regsel*/1<<0, nonce, sizeof(nonce), /*AK ctx*/"", /*ctxlen*/0, sig);
-    hexout("SIG", sig, sizeof(sig));
-
-    // To verify a quote, the snapshot has to be reproduced
-    // CryptSnapshot(snapshot, 1<<0, nonce, sizeof(nonce));
-    MZ_SequenceHash();
-    outlen = 0;
-    MZ_SequenceUpdate("\x00\x00\x00\x01", 4, 0, &outlen);
-    MZ_SequenceUpdate(dig, sizeof(dig), 0, &outlen);
-    MZ_SequenceUpdate(nonce, sizeof(nonce), 0, &outlen);
-    outlen = sizeof(dig);
-    MZ_SequenceComplete(dig, &outlen);
-    hexout("SS", dig, outlen);
-
-    MZ_SignatureVerify(true, /*ctx*/"", /*ctxlen*/0,
-        dig, sig, &flag);
-    printf("Verify %s\n", flag ? "True" : "False");
-
-    MZ_DpDerive(0, "XYZZY", 5);
-    MZ_Derive(1, "CompoundDeviceID", 16, id);
-    hexout("CDI2", id, sizeof(id));
-
-    MZ_DpDerive(0, 0, 0);
-    MZ_Derive(1, "CompoundDeviceID", 16, id);
-    hexout("CDI1", id, sizeof(id));
-
-    MZ_Unlock();
-}
