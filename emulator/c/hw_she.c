@@ -186,14 +186,6 @@ void SHE_hash_fini(she_hctx_t * hctx, void *dig)
     memcpy(dig, hctx->H, sizeof(hctx->H));
 }
 
-void SHE_hash(void *out, const void * msg, size_t n)
-{
-she_hctx_t hctx;
-    SHE_hash_init(&hctx);
-    SHE_hash_update(&hctx, msg, n);
-    SHE_hash_fini(&hctx, out);
-}
-
 void CryptHashInit(profile_shc_t *hctx)
 {
     SHE_hash_init(hctx);
@@ -202,11 +194,6 @@ void CryptHashInit(profile_shc_t *hctx)
 void CryptHashUpdate(profile_shc_t *hctx, const void * msg, size_t n)
 {
     SHE_hash_update(hctx, msg, n);
-}
-
-void CryptHash(uint8_t *out, const void * msg, size_t n)
-{
-    SHE_hash(out, msg, n);
 }
 
 void CryptHashFinal(profile_shc_t *hctx, void *dig)

@@ -3,8 +3,6 @@
 #include "hw_ascon.h"
 #include "mars_internal.h"
 
-static ascon_hash_ctx_t shc;
-
 #include <stdio.h>
 static void hexout(const char *msg, const void *buf, size_t len)
 {
@@ -82,12 +80,15 @@ void CryptXkdf(void *key, const void *parent, char label, const void *ctx, uint1
 // Test vector from .../LibAscon-master/tst/vectors/hash.txt
 bool CryptSelfTest(bool fullTest)
 {
+ascon_hash_ctx_t shc;
 uint8_t dig[32];
 uint8_t exp[32] = { 0x80, 0x13, 0xEA, 0xAA, 0x19, 0x51, 0x58, 0x0A,
                     0x7B, 0xEF, 0x7D, 0x29, 0xBA, 0xC3, 0x23, 0x37,
                     0x7E, 0x64, 0xF2, 0x79, 0xEA, 0x73, 0xE6, 0x88,
                     0x1B, 0x8A, 0xED, 0x69, 0x85, 0x5E, 0xF7, 0x64 };
-    CryptHash(dig, "\x00\x01\x02\x03", 4);
+    CryptHashInit(&shc);
+    CryptHashUpdate(&shc, "\x00\x01\x02\x03", 4);
+    CryptHashFinal(&shc, dig);
     return memcmp(dig, exp, sizeof(dig)) == 0;
 }
 
@@ -99,11 +100,6 @@ void CryptHashInit(profile_shc_t *hctx)
 void CryptHashUpdate(profile_shc_t *hctx, const void *msg, size_t n)
 {
     ascon_hash_update(hctx, msg, n);
-}
-
-void CryptHash(uint8_t *out, const void *msg, size_t n)
-{
-    ascon_hash(out, msg, n);
 }
 
 void CryptHashFinal(profile_shc_t *hctx, void *dig)
