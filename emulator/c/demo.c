@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 
 #include "api.h"
+void MARS_dump(); // for debugging
 
 static void hexout(const char *msg, const void *buf, uint16_t len)
 {
@@ -23,6 +24,7 @@ typeof(len) i;
 #include <arpa/inet.h>
 
 // send blob to MARS server, wait for reply
+MARS_ApiIoCb txrx;
 size_t txrx(void *ctx, void *txbuf, size_t txlen, void *rxbuf, ssize_t rxlen)
 {
     int sd;

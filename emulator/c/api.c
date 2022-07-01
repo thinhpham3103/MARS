@@ -18,7 +18,7 @@ static struct {
     pthread_mutex_t mx; // mutex for Lock and Unlock
     pthread_t tid;      // thread ID of mx lock owner; 0 if unlocked
     uint16_t diglen, siglen, keylen;
-    MARS_ApiIoCb txrx;
+    MARS_ApiIoCb * txrx;
     void * txrx_ctx;
 } mz;
 
@@ -227,7 +227,7 @@ MARS_RC MARS_SignatureVerify (
 }
 
 
-MARS_RC MARS_ApiInit(MARS_ApiIoCb txrx, void *txrx_ctx)
+MARS_RC MARS_ApiInit(MARS_ApiIoCb *txrx, void *txrx_ctx)
 {
 bool err;
     printf("MARS_ApiInit\n");

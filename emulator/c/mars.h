@@ -3,33 +3,31 @@
 #include <stdlib.h> // for size_t
 #include <stdbool.h> // for bool, true, false
 
-#define MARS_PT_PCR	1	// uint16_t number of consecutive PCRs implemented on this MARS
-#define MARS_PT_TSR	2	// uint16_t	number of consecutive TSRs implemented on this MARS
-#define MARS_PT_LEN_DIGEST	3	// uint16_t	size of a digest that can be processed or produced
-#define MARS_PT_LEN_SIGN	4	// uint16_t	size of signature produced by CryptSign()
-#define MARS_PT_LEN_KSYM	5	// uint16_t	size of symmetric key produced by CryptSkdf()
-#define MARS_PT_LEN_KPUB	6	// uint16_t	size of asymmetric key returned by MARS_PublicRead()
-#define MARS_PT_LEN_KPRV	7	// uint16_t	size of private asymmetric key produced by CryptAkdf()
-#define MARS_PT_ALG_HASH	8	// uint16_t	TCG-registered algorithm for hashing by CryptHash()
-#define MARS_PT_ALG_SIGN	9	// uint16_t	TCG-registered algorithm for signing by CryptSign()
-#define MARS_PT_ALG_SKDF	10	// uint16_t	TCG-registered algorithm for symmetric key derivation by CryptSkdf()
-#define MARS_PT_ALG_AKDF	11	// uint16_t	TCG-registered algorithm for asymmetric key derivation by CryptAkdf()
+#define MARS_PT_PCR 1   // uint16_t number of consecutive PCRs implemented on this MARS
+#define MARS_PT_TSR 2   // uint16_t number of consecutive TSRs implemented on this MARS
+#define MARS_PT_LEN_DIGEST  3   // uint16_t size of a digest that can be processed or produced
+#define MARS_PT_LEN_SIGN    4   // uint16_t size of signature produced by CryptSign()
+#define MARS_PT_LEN_KSYM    5   // uint16_t size of symmetric key produced by CryptSkdf()
+#define MARS_PT_LEN_KPUB    6   // uint16_t size of asymmetric key returned by MARS_PublicRead()
+#define MARS_PT_LEN_KPRV    7   // uint16_t size of private asymmetric key produced by CryptAkdf()
+#define MARS_PT_ALG_HASH    8   // uint16_t TCG-registered algorithm for hashing by CryptHash()
+#define MARS_PT_ALG_SIGN    9   // uint16_t TCG-registered algorithm for signing by CryptSign()
+#define MARS_PT_ALG_SKDF    10  // uint16_t TCG-registered algorithm for symmetric key derivation by CryptSkdf()
+#define MARS_PT_ALG_AKDF    11  // uint16_t TCG-registered algorithm for asymmetric key derivation by CryptAkdf()
 
 typedef uint16_t MARS_RC;
 
-#define MARS_RC_SUCCESS	0	// Command executed as expected
+#define MARS_RC_SUCCESS 0   // Command executed as expected
 #define MARS_RC_IO      1   // Input / Output or parsing error
-#define MARS_RC_FAILURE	2   // self-testing placed MARS in failure mode or MARS is otherwise inaccessible
-// reserved         	3
-#define MARS_RC_BUFFER	4   // Invalid buffer pointer (null or misaligned) or length
-#define MARS_RC_COMMAND	5   // Command not supported
-#define MARS_RC_VALUE	6   // Value out of range or incorrect for context
+#define MARS_RC_FAILURE 2   // self-testing placed MARS in failure mode or MARS is otherwise inaccessible
+// reserved             3
+#define MARS_RC_BUFFER  4   // Invalid buffer pointer (null or misaligned) or length
+#define MARS_RC_COMMAND 5   // Command not supported
+#define MARS_RC_VALUE   6   // Value out of range or incorrect for context
 #define MARS_RC_REG     7   // Invalid register index specified
 #define MARS_RC_SEQ     8   // Not preceded by Sequence start command
 
 // MANAGEMENT
-
-void MARS_dump(); // for debugging
 
 MARS_RC MARS_SelfTest (bool fullTest);
 

@@ -70,7 +70,7 @@ $(BUILD)/mars_ascon.so: $(BUILD)/mars_ascon.o $(BUILD)/hw_ascon.o ../ascon/LibAs
 $(BUILD)/%.o: %.c mars.h
 	gcc -o $@ -c $<
 
-$(BUILD)/api.o: api.h
+$(BUILD)/api.o $(BUILD)/demo.o: api.h mars.h
 
 $(BUILD)/demo: $(BUILD)/demo.o $(BUILD)/api.o $(BUILD)/vget.o $(BUILD)/libtinycbor.so
 	gcc -o $@ $^
