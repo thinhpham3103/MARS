@@ -24,13 +24,13 @@ typeof(len) i;
 #include <arpa/inet.h>
 
 // send blob to MARS server, wait for reply
-MARS_ApiIoCb txrx;
-size_t txrx(void *ctx, void *txbuf, size_t txlen, void *rxbuf, ssize_t rxlen)
+size_t MARS_Transport(void *ctx, void *txbuf, size_t txlen, void *rxbuf, size_t rxlen)
 {
     int sd;
     struct sockaddr_in server_addr;
     char server_message[100], client_message[100];
     int server_struct_length = sizeof(server_addr);
+    ssize_t n;
 
     // Create socket:
     sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -48,12 +48,12 @@ size_t txrx(void *ctx, void *txbuf, size_t txlen, void *rxbuf, ssize_t rxlen)
         return 0;
 
     // Receive the server's response:
-    if ((rxlen = recvfrom(sd, rxbuf, rxlen, 0,
+    if ((n = recvfrom(sd, rxbuf, rxlen, 0,
             (struct sockaddr*)&server_addr, &server_struct_length)) < 0)
         return 0;
 
     close(sd);
-    return rxlen;
+    return n;
 }
 
 
@@ -65,7 +65,7 @@ size_t outlen;
 uint16_t diglen, siglen, keylen;
 bool flag;
 
-    MARS_ApiInit(txrx, 0);
+    MARS_ApiInit(0);
 
     MARS_Lock();
     MARS_SelfTest(true);
