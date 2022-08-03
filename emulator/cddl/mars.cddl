@@ -1,0 +1,311 @@
+; MARS command codes
+MARS_CC_SelfTest =            0
+MARS_CC_CapabilityGet =       1
+MARS_CC_SequenceHash =        2
+MARS_CC_SequenceUpdate =      3
+MARS_CC_SequenceComplete =    4
+MARS_CC_PcrExtend =           5
+MARS_CC_RegRead =             6
+MARS_CC_Derive =              7
+MARS_CC_DpDerive =            8
+MARS_CC_PublicRead =          9
+MARS_CC_Quote =               10
+MARS_CC_Sign =                11
+MARS_CC_SignatureVerify =     12
+
+; MARS Return codes
+MARS_RC_SUCCESS = 0
+MARS_RC_FAILURE = 2
+MARS_RC_BUFFER =  4
+MARS_RC_COMMAND = 5
+MARS_RC_VALUE =   6
+MARS_RC_REG =     7
+MARS_RC_SEQ =     8
+
+MARS_RC_ANY_FAILURE  =  MARS_RC_FAILURE /
+                        MARS_RC_BUFFER /
+                        MARS_RC_COMMAND /
+                        MARS_RC_VALUE /
+                        MARS_RC_REG /
+                        MARS_RC_SEQ
+
+
+; MARS Capabilities
+; number of consecutive PCRs implemented on this MARS
+MARS_PT_PCR =        1
+; number of consecutive TSRs implemented on this MARS
+MARS_PT_TSR =        2
+; size of a digest that can be processed or produced
+MARS_PT_LEN_DIGEST = 3
+; size of signature produced by CryptSign()
+MARS_PT_LEN_SIGN =   4
+; size of symmetric key produced by CryptSkdf()
+MARS_PT_LEN_KSYM =   5
+; size of asymmetric key returned by MARS_PublicRead()
+MARS_PT_LEN_KPUB =   6
+; size of private asymmetric key produced by CryptAkdf()
+MARS_PT_LEN_KPRV =   7
+; TCG-registered algorithm for hashing by CryptHash()
+MARS_PT_ALG_HASH =   8
+; TCG-registered algorithm for signing by CryptSign()
+MARS_PT_ALG_SIGN =   9
+; TCG-registered algorithm for symmetric key derivation by CryptSkdf()
+MARS_PT_ALG_SKDF =   10
+; TCG-registered algorithm for asymmetric key derivation by CryptAkdf()
+MARS_PT_ALG_AKDF =   11
+
+; Implementation specific parameters
+uint16 = 0..65535
+; Arbitrary length binary data
+binary_data = bstr .size (0..2048)
+
+; binary data of length MARS_PT_LEN_DIGEST
+digest_data = bstr .size 32
+; binary data of length MARS_PT_LEN_KSYM
+ksym_data = bstr .size 32
+; binary data of length MARS_PT_LEN_KPUB
+kpub_data = bstr .size 32
+; binary data of length MARS_PT_LEN_SIGN
+sign_data = bstr .size 32
+
+
+reg_select_type = uint .size 4
+
+MARS_SelfTest_Req = [
+    code: MARS_CC_SelfTest,
+    full_test: bool,
+]
+
+MARS_SelfTest_Rsp = [
+    rc: MARS_RC_SUCCESS / MARS_RC_ANY_FAILURE,
+]
+
+MARS_CapabilityGet_Req = [
+     code: MARS_CC_CapabilityGet,
+     capability:    MARS_PT_PCR /
+                    MARS_PT_TSR /
+                    MARS_PT_LEN_DIGEST /
+                    MARS_PT_LEN_SIGN /
+                    MARS_PT_LEN_KSYM /
+                    MARS_PT_LEN_KPUB /
+                    MARS_PT_LEN_KPRV /
+                    MARS_PT_ALG_HASH /
+                    MARS_PT_ALG_SIGN /
+                    MARS_PT_ALG_SKDF /
+                    MARS_PT_ALG_AKDF,
+]
+
+MARS_CapabilityGet_Rsp_Success = [
+     rc: MARS_RC_SUCCESS,
+     capability: uint16 ,
+]
+
+MARS_CapabilityGet_Rsp_Failure = [
+     rc: MARS_RC_ANY_FAILURE,
+]
+
+MARS_CapabilityGet_Rsp = MARS_CapabilityGet_Rsp_Success /
+                         MARS_CapabilityGet_Rsp_Failure
+
+MARS_SequenceHash_Req = [
+     code: MARS_CC_SequenceHash,
+]
+
+MARS_SequenceHash_Rsp = [
+     rc: MARS_RC_SUCCESS / MARS_RC_ANY_FAILURE,
+]
+
+MARS_SequenceUpdate_Req = [
+     code:  MARS_CC_SequenceUpdate,
+     data: binary_data,
+]
+
+MARS_SequenceUpdate_Rsp_Success = [
+     rc: MARS_RC_SUCCESS,
+     ? data: binary_data,
+]
+
+MARS_SequenceUpdate_Rsp_Failure = [
+     rc: MARS_RC_ANY_FAILURE,
+]
+
+MARS_SequenceUpdate_Rsp = MARS_SequenceUpdate_Rsp_Success /
+                          MARS_SequenceUpdate_Rsp_Failure
+
+MARS_SequenceComplete_Req = [
+     code: MARS_CC_SequenceComplete,
+]
+
+MARS_SequenceComplete_Rsp_Success = [
+     rc: MARS_RC_SUCCESS,
+     ? data: binary_data,
+]
+
+MARS_SequenceComplete_Rsp_Failure = [
+     rc: MARS_RC_ANY_FAILURE,
+]
+
+MARS_SequenceComplete_Rsp = MARS_SequenceComplete_Rsp_Success /
+                          MARS_SequenceComplete_Rsp_Failure
+
+MARS_PcrExtend_Req = [
+    code: MARS_CC_PcrExtend,
+    reg_select: reg_select_type,
+    digest: digest_data,
+]
+
+MARS_PcrExtend_Rsp = [
+     rc: MARS_RC_SUCCESS / MARS_RC_ANY_FAILURE,
+]
+
+MARS_RegRead_Req = [
+    code: MARS_CC_RegRead,
+    reg_select: reg_select_type,
+]
+
+MARS_RegRead_Rsp_Success = [
+     rc: MARS_RC_SUCCESS,
+     digest: digest_data,
+]
+
+MARS_RegRead_Rsp_Failure = [
+     rc: MARS_RC_ANY_FAILURE,
+]
+
+MARS_RegRead_Rsp = MARS_RegRead_Rsp_Success /
+                   MARS_RegRead_Rsp_Failure
+
+
+MARS_Derive_Req = [
+    code: MARS_CC_Derive,
+    reg_select: reg_select_type,
+    context: binary_data
+]
+
+MARS_Derive_Rsp_Success = [
+     rc: MARS_RC_SUCCESS,
+     data: ksym_data,
+]
+
+MARS_Derive_Rsp_Failure = [
+     rc: MARS_RC_ANY_FAILURE,
+]
+
+MARS_Derive_Rsp = MARS_Derive_Rsp_Success /
+                   MARS_Derive_Rsp_Failure
+
+
+MARS_DpDerive_Req = [
+    code: MARS_CC_DpDerive,
+    reg_select: reg_select_type,
+    context: nil / binary_data
+]
+
+MARS_DpDerive_Rsp = [
+     rc: MARS_RC_SUCCESS / MARS_RC_ANY_FAILURE,
+]
+
+MARS_PublicRead_Req = [
+    code: MARS_CC_PublicRead,
+]
+
+MARS_PublicRead_Rsp_Success = [
+     rc: MARS_RC_SUCCESS,
+     data: kpub_data,
+]
+
+MARS_PublicRead_Rsp_Failure = [
+     rc: MARS_RC_ANY_FAILURE,
+]
+
+MARS_PublicRead_Rsp = MARS_PublicRead_Rsp_Success /
+                   MARS_PublicRead_Rsp_Failure
+
+
+MARS_Quote_Req = [
+    code: MARS_CC_Quote,
+    reg_select: reg_select_type,
+    nonce: digest_data,
+    context: binary_data
+]
+
+MARS_Quote_Rsp_Success = [
+     rc: MARS_RC_SUCCESS,
+     signature: sign_data,
+]
+
+MARS_Quote_Rsp_Failure = [
+     rc: MARS_RC_ANY_FAILURE,
+]
+
+MARS_Quote_Rsp = MARS_Quote_Rsp_Success /
+                 MARS_Quote_Rsp_Failure
+
+
+MARS_Sign_Req = [
+    code: MARS_CC_Sign,
+    context: binary_data,
+    digest: digest_data,
+]
+
+MARS_Sign_Rsp_Success = [
+     rc: MARS_RC_SUCCESS,
+     signature: sign_data,
+]
+
+MARS_Sign_Rsp_Failure = [
+     rc: MARS_RC_ANY_FAILURE,
+]
+
+MARS_Sign_Rsp = MARS_Sign_Rsp_Success /
+                 MARS_Sign_Rsp_Failure
+
+MARS_SignatureVerify_Req = [
+    code: MARS_CC_SignatureVerify,
+    retricted: bool,
+    context: binary_data,
+    digest: digest_data,
+    signature: sign_data,
+]
+
+MARS_SignatureVerify_Rsp_Success = [
+     rc: MARS_RC_SUCCESS,
+     verdict: bool,
+]
+
+MARS_SignatureVerify_Rsp_Failure = [
+     rc: MARS_RC_ANY_FAILURE,
+]
+
+MARS_SignatureVerify_Rsp = MARS_SignatureVerify_Rsp_Success /
+                           MARS_SignatureVerify_Rsp_Failure
+
+
+Mars_Command = [ MARS_SelfTest_Req /
+        MARS_CapabilityGet_Req /
+        MARS_SequenceHash_Req /
+        MARS_SequenceUpdate_Req /
+        MARS_SequenceComplete_Req /
+        MARS_PcrExtend_Req /
+        MARS_Derive_Req /
+        MARS_DpDerive_Req /
+        MARS_PublicRead_Req /
+        MARS_Quote_Req /
+        MARS_Sign_Req /
+        MARS_SignatureVerify_Req,
+]
+
+Mars_Response = [   MARS_SelfTest_Rsp /
+                    MARS_CapabilityGet_Rsp /
+                    MARS_SequenceHash_Rsp /
+                    MARS_SequenceUpdate_Rsp /
+                    MARS_PcrExtend_Rsp /
+                    MARS_SequenceComplete_Rsp /
+                    MARS_RegRead_Rsp /
+                    MARS_Derive_Rsp /
+                    MARS_DpDerive_Rsp /
+                    MARS_PublicRead_Rsp /
+                    MARS_Quote_Rsp /
+                    MARS_Sign_Rsp /
+                    MARS_SignatureVerify_Rsp
+]
