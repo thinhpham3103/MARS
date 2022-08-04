@@ -9,3 +9,5 @@ This folder contains CDDL schema for MARS commands for serialization
 
 2. zcbor C library (in ./cddl/zcbor)
     git clone <https://github.com/NordicSemiconductor/zcbor.git>
+
+
