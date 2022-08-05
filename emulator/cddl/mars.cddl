@@ -14,28 +14,13 @@ CC_Sign =                11
 CC_SignatureVerify =     12
 
 ; MARS Return codes
-RC_SUCCESS = 0
-RC_FAILURE = 2
-RC_BUFFER =  4
-RC_COMMAND = 5
-RC_VALUE =   6
-RC_REG =     7
-RC_SEQ =     8
-
-RC_ANY_FAILURE  =  RC_FAILURE /
-                   RC_BUFFER /
-                   RC_COMMAND /
-                   RC_VALUE /
-                   RC_REG /
-                   RC_SEQ
-
-MARS_RC = RC_SUCCESS /
-          RC_FAILURE /
-          RC_BUFFER /
-          RC_COMMAND /
-          RC_VALUE /
-          RC_REG /
-          RC_SEQ
+rc_success = 0
+rc_failure = 2
+rc_buffer  = 4
+rc_command = 5
+rc_value   = 6
+rc_reg     = 7
+rc_seq     = 8
 
 ; MARS Capabilities
 ; number of consecutive PCRs implemented on this MARS
@@ -75,16 +60,16 @@ kpub_data = bstr .size 32
 ; binary data of length PT_LEN_SIGN
 sign_data = bstr .size 32
 
-
+; bit mask selecting PCRs and TSRs
 reg_select_type = uint .size 4
 
-SelfTest = [
-    code: CC_SelfTest,
+SelfTest = (
+    CC_SelfTest,
     full_test: bool,
-]
+)
 
-CapabilityGet = [
-     code: CC_CapabilityGet,
+CapabilityGet = (
+     CC_CapabilityGet,
      capability:    PT_PCR /
                     PT_TSR /
                     PT_LEN_DIGEST /
@@ -96,89 +81,117 @@ CapabilityGet = [
                     PT_ALG_SIGN /
                     PT_ALG_SKDF /
                     PT_ALG_AKDF,
-]
+)
 
-CapabilityGet_Rsp = uint16
+CapabilityGet_Rsp = (
+    rc_success,
+    capability_data: uint16
+)
 
-SequenceHash = [
+SequenceHash = (
      code: CC_SequenceHash,
-]
+)
 
-SequenceUpdate = [
-     code:  CC_SequenceUpdate,
-     data: binary_data,
-]
+SequenceUpdate = (
+     CC_SequenceUpdate,
+     binary_data,
+)
 
-SequenceUpdate_Rsp = binary_data
+SequenceUpdate_Rsp = (
+    rc_success,
+    ? binary_data
+)
 
-SequenceComplete = [
-     code: CC_SequenceComplete,
-]
+SequenceComplete = (
+     CC_SequenceComplete,
+)
 
-SequenceComplete_Rsp = binary_data,
+SequenceComplete_Rsp = (
+    rc_success,
+    ? binary_data,
+)
 
-PcrExtend = [
-    code: CC_PcrExtend,
+PcrExtend = (
+    CC_PcrExtend,
+    reg_select_type,
+    digest_data,
+)
+
+RegRead = (
+    CC_RegRead,
     reg_select: reg_select_type,
-    digest: digest_data,
-]
+)
 
-RegRead = [
-    code: CC_RegRead,
-    reg_select: reg_select_type,
-]
+RegRead_Rsp = (
+    rc_success,
+    digest_data,
+)
 
-RegRead_Rsp = digest_data,
-
-Derive = [
-    code: CC_Derive,
+Derive = (
+    CC_Derive,
     reg_select: reg_select_type,
     context: binary_data
-]
+)
 
-Derive_Rsp = ksym_data
+Derive_Rsp = (
+    rc_success,
+    ksym_data
+)
 
-DpDerive = [
-    code: CC_DpDerive,
+DpDerive = (
+    CC_DpDerive,
     reg_select: reg_select_type,
     context: nil / binary_data
-]
+)
 
-PublicRead = [
-    code: CC_PublicRead,
-]
+PublicRead = (
+    CC_PublicRead,
+)
 
-PublicRead_Rsp = kpub_data
+PublicRead_Rsp = (
+    rc_success,
+    kpub_data
+)
 
-Quote = [
-    code: CC_Quote,
+Quote = (
+    CC_Quote,
     reg_select: reg_select_type,
     nonce: digest_data,
     context: binary_data
-]
+)
 
-Quote_Rsp = sign_data
+Quote_Rsp = (
+    rc_success,
+    sign_data
+)
 
-Sign = [
-    code: CC_Sign,
+Sign = (
+    CC_Sign,
     context: binary_data,
     digest: digest_data,
-]
+)
 
-Sign_Rsp = sign_data
+Sign_Rsp = (
+    rc_success,
+    sign_data
+)
 
-SignatureVerify = [
-    code: CC_SignatureVerify,
+SignatureVerify = (
+    CC_SignatureVerify,
     retricted: bool,
     context: binary_data,
     digest: digest_data,
     signature: sign_data,
-]
+)
 
-SignatureVerify_Rsp = bool
+SignatureVerify_Rsp = (
+    rc_success,
+    bool
+)
 
 ; MARS Command
-mars_command = SelfTest /
+mars_command = [
+               SelfTest /
                CapabilityGet /
                SequenceHash /
                SequenceUpdate /
@@ -191,18 +204,26 @@ mars_command = SelfTest /
                Quote /
                Sign /
                SignatureVerify
+]
 
 ; MARS Response
 ; To simplify encoding, unconditionally put response code first
 ; and make data optional.
 mars_response = [
-     rc:     MARS_RC,
-     ? data: CapabilityGet_Rsp /
-             SequenceComplete_Rsp /
-             RegRead_Rsp /
-             Derive_Rsp /
-             PublicRead_Rsp /
-             Quote_Rsp /
-             Sign_Rsp /
-             SignatureVerify_Rsp
+    rc:   ( rc_success /
+            rc_failure /
+            rc_buffer  /
+            rc_command /
+            rc_value   /
+            rc_reg     /
+            rc_seq     ) /
+            CapabilityGet_Rsp /
+            SequenceUpdate_Rsp /
+            SequenceComplete_Rsp /
+            RegRead_Rsp /
+            Derive_Rsp /
+            PublicRead_Rsp /
+            Quote_Rsp /
+            Sign_Rsp /
+            SignatureVerify_Rsp
 ]
