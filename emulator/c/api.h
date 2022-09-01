@@ -2,7 +2,7 @@
 
 #include "mars.h"
 
-#define MARS_RC_LOCK    3   // MARS is not locked
+#define MARS_RC_LOCK    3   // not locked or calling thread already locked
 
 // transport function must be provide by user of API
 size_t MARS_Transport (
