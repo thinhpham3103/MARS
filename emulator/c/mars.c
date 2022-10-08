@@ -5,7 +5,7 @@
 // should be defined in the Profile hw_xxxx.h
 #define CryptDpInit() CryptSkdf(DP, PS, MARS_LD, MARS_debug ? "dbg" : "prd", 3)
 
-#include <endian.h>
+#include <arpa/inet.h> // for htonl()
 #include <string.h> // for memset()
 #include <stdio.h>
 #include <stdbool.h>
@@ -79,7 +79,7 @@ void CryptSnapshot(void * out, uint32_t regSelect, const void * ctx, uint16_t ct
 profile_shc_t shc;
 uint16_t i = 0;
 
-    uint32_t be_regsel = htobe32(regSelect);
+    uint32_t be_regsel = htonl(regSelect);
 
     // any TSRs in regSelect should be updated here
     // TSRs are in REG[PROFILE_COUNT_PCR ... PROFILE_COUNT_REG-1]

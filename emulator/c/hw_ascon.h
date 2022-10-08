@@ -1,7 +1,7 @@
 #include <stdint.h> // for uint32_t, etc.
 #include <stdlib.h> // for size_t
 #include <stdbool.h> // for bool, true, false
-#include "../ascon/LibAscon-1.2.0/inc/ascon.h"
+#include "../ascon/inc/ascon.h"
 
 // From TCG Algorithm Registry
 #define TPM_ALG_ERROR 0

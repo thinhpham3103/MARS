@@ -77,7 +77,7 @@ void CryptXkdf(void *key, const void *parent, char label, const void *ctx, uint1
     CryptSkdf(key, parent, label, ctx, ctxlen);
 }
 
-// Test vector from .../LibAscon-master/tst/vectors/hash.txt
+// Test vector from ../ascon/tst/vectors/hash.txt
 bool CryptSelfTest(bool fullTest)
 {
 ascon_hash_ctx_t shc;
