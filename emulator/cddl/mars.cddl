@@ -15,6 +15,7 @@ CC_SignatureVerify =     12
 
 ; MARS Return codes
 rc_success = 0
+rc_io      = 1
 rc_failure = 2
 rc_buffer  = 4
 rc_command = 5
@@ -211,6 +212,7 @@ mars_command = [
 ; and make data optional.
 mars_response = [
     rc:   ( rc_success /
+            rc_io      /
             rc_failure /
             rc_buffer  /
             rc_command /
