@@ -91,13 +91,30 @@ def CryptVerify(key, dig, sig):
 def shekdf(K, C):
     return CryptHash(K + b'\x01\x01' + C + b'\x00')
 
-def CryptSkdf(key, x, y):
-    return shekdf(key, x + y)
+def CryptSkdf(key, label, ctx):
+    assert len(label) == 1
+    return shekdf(key, label + ctx)
 
 CryptAkdf = None
 
+# These tests are from the AUTOSAR SHE spec, 4.13 Examples and Test Vectors
+# See https://www.autosar.org/fileadmin/user_upload/standards/foundation/20-11/AUTOSAR_TR_SecureHardwareExtensions.pdf
 def CryptSelfTest(fullTest):
-    return True # TODO: write some real tests
+
+    # TEST 1 for CMAC, from spec 4.13.2.3, example 1
+    K   = bytes.fromhex('2b7e151628aed2a6abf7158809cf4f3c')
+    msg = bytes.fromhex('6bc1bee22e409f96e93d7e117393172a')
+    exp = bytes.fromhex('070a16b46b4d4144f79bdd9dd04a287c')
+    out = CryptSign(K, msg)
+    if out != exp: return False
+ 
+    # TEST2 for KDF, from spec 4.13.2.5
+    K   = bytes.fromhex('000102030405060708090a0b0c0d0e0f')
+    exp = bytes.fromhex('118a46447a770d87828a69c222e2d17e')
+    out = CryptSkdf(K, b'S', b'HE')
+    if out != exp: return False
+
+    return True
 
 if __name__ == "__main__":
 
@@ -142,29 +159,13 @@ if __name__ == "__main__":
     out = hobj.digest()
     print('SEQ TEST:', 'pass' if out == exp else 'FAIL')
 
-    # CMAC TESTS
-
-    K   = bytes.fromhex('2b7e151628aed2a6abf7158809cf4f3c')
-    msg = bytes.fromhex('6bc1bee22e409f96e93d7e117393172a')
-    exp = bytes.fromhex('070a16b46b4d4144f79bdd9dd04a287c')
-    out = cmac(K, msg)
-    print('CMAC TEST:', 'pass' if out == exp else 'FAIL')
- 
-    out = cmac1(K, msg)
-    print('CMAC1 TEST:', 'pass' if out == exp else 'FAIL')
-
     # SIGN TESTS
     h = hashmod.new()
     h.update(b'check 1 2 3')
-    sig = CryptSign(K, h.digest())
+    sig = CryptSign(key, h.digest())
 
     h = hashmod.new()
     h.update(b'check 1 2 3')
-    print('SIGN TEST:', 'pass' if CryptVerify(K, h.digest(), sig) else 'FAIL')
+    print('SIGN TEST:', 'pass' if CryptVerify(key, h.digest(), sig) else 'FAIL')
 
-    # KDF TEST
-
-    K   = bytes.fromhex('000102030405060708090a0b0c0d0e0f')
-    exp = bytes.fromhex('118a46447a770d87828a69c222e2d17e')
-    out = CryptSkdf(K, b'SHE', b'')
-    print('KDF TEST:', 'pass' if out == exp else 'FAIL')
+    print('CryptSelfTest:', 'pass' if CryptSelfTest(True) else 'FAIL')
