@@ -2,7 +2,6 @@
 
 # Sample MARS # based loosly on subset of MARS Spec draft 1.3
 # It does not support:
-#   TSRs
 #   CapabilityGet
 # It does support SequenceEvent() which was dropped from the spec.
 
@@ -11,6 +10,7 @@
 
 from threading import Lock, current_thread
 from enum import Enum
+import time # for TSR
 
 class PT(Enum): # TODO: incomplete
     PCRS = 1
@@ -27,25 +27,27 @@ def int2bebar(i, n):
 
 class MARS_RoT:
 
-    def __init__(self, hw, secret, bsize, debug=False):
+    def __init__(self, hw, secret, npcr, debug=False):
         self.debug = debug
+        self.npcr = npcr
+        self.ntsr = 1
+        self.nreg = self.npcr + self.ntsr
         if debug: print('Provisioning of new MARS device')
         assert len(secret) == hw.len_skey
-        assert bsize > 0 and bsize <= 32
+        assert self.nreg > 0 and self.nreg <= 32
         self.hw = hw                    # hardware, i.e. Crypt methods
         self.CryptXkdf = hw.CryptAkdf if hw.CryptAkdf else hw.CryptSkdf
         self.PS = secret                # Primary Seed
-        self.bsize = bsize              # PCR bank size
         self.hobj = None
         self.seqpcr = None
         self.lock = Lock()
         self.thread = None
 
-        self.PCR = [bytes(self.hw.len_digest) for _ in range(self.bsize)]
-        # init TSR
+        # init PCR and TSR
+        self.REG = [bytes(self.hw.len_digest) for _ in range(self.nreg)]
         self.failure = False
         self.Lock()
-        self.hw.CryptSelfTest(True)
+        self.SelfTest(True)
         self.CryptDpInit()
         self.Unlock()
         
@@ -58,9 +60,9 @@ class MARS_RoT:
 
     def SelfTest(self, fullTest):
         assert self.locked()
-        if not failure:
-            failure = not self.hw.CryptSelfTest(fullTest)
-        return not failure
+        if not self.failure:
+            self.failure = not self.hw.CryptSelfTest(fullTest)
+        return not self.failure
 
     def Lock(self):
         assert not self.locked()
@@ -78,32 +80,44 @@ class MARS_RoT:
     # TODO: incomplete
     def CapabilityGet(self, pt):
         if pt == PT.PCRS:
-            return self.bsize
+            return self.npcr
         # if pt == PT.
 
     # SUPPORT FUNCTIONS
 
     def dump(self):
         assert self.locked()
-        print('--------------------------')
-        print('MARS PRIVATE CONFIGURATION')
-        print('     PS:', self.PS.hex())
-        print('     DP:', self.DP.hex())
-        for i in range(self.bsize):
-            print(' PCR[' + str(i) + ']: ' + self.PCR[i].hex())
-        print('--------------------------')
+        if self.debug:
+            print('--------------------------')
+            print('MARS PRIVATE CONFIGURATION')
+            print('     PS:', self.PS.hex())
+            print('     DP:', self.DP.hex())
+            for i in range(self.nreg):
+                print(' REG[' + str(i) + ']: ' + self.REG[i].hex())
+            print('--------------------------')
 
     def CryptDpInit(self):
         self.DP = self.hw.CryptSkdf(self.PS, b'D', b'dbg' if self.debug else b'prd')
 
     def CryptSnapshot(self, regsel, ctx):
-        assert (regsel >> self.bsize) == 0   # no stray bits!
-        # TODO: Dynamic PCRs, if any, are written at this point
+        assert (regsel >> self.nreg) == 0   # no stray bits!
+
+        # Example of supplemental code to sample a TSR
+        def sample(tsr):
+            if self.debug: print('Sampling TSR', tsr)
+            return int2bebar(time.monotonic_ns(), self.hw.len_digest)
+
+        # TSRs, if any, are written at this point
+        for tsr in range(self.ntsr):
+            i = self.npcr + tsr
+            if (1<<i) & regsel:
+                self.REG[i] = sample(tsr)
+
         h = self.hw.hashmod.new()
         h.update(int2bebar(regsel, 4))
-        for i in range(self.bsize):
+        for i in range(self.nreg):
             if (1<<i) & regsel:
-                h.update(self.PCR[i])
+                h.update(self.REG[i])
         h.update(ctx)
         return h.digest()
 
@@ -117,7 +131,7 @@ class MARS_RoT:
     # SequenceEvent support was dropped from the spec since this was
     # seen as a simple convenience function, and not a primitive.
     def SequenceEvent(self, ipcr):
-        assert ipcr >= 0 and ipcr < self.bsize
+        assert ipcr >= 0 and ipcr < self.npcr
         assert self.locked()
         assert self.seqpcr is None
         self.seqpcr = ipcr
@@ -142,13 +156,13 @@ class MARS_RoT:
 
     def PcrExtend(self, i, dig):
         assert self.locked()
-        assert i >= 0 and i < self.bsize
-        self.PCR[i] = self.hw.CryptHash(self.PCR[i] + dig)
+        assert i >= 0 and i < self.npcr
+        self.REG[i] = self.hw.CryptHash(self.REG[i] + dig)
 
     def RegRead(self, i):
         assert self.locked()
-        assert i >= 0 and i < self.bsize
-        return self.PCR[i]
+        assert i >= 0 and i < self.nreg
+        return self.REG[i]
 
     # KEY MANAGEMENT
 
@@ -169,7 +183,7 @@ class MARS_RoT:
     def PublicRead(self, restricted, ctx):
         assert self.locked()
         assert self.hw.CryptAkdf
-        label = b'R' if restricted else b'U' # b'S' ??
+        label = b'R' if restricted else b'U'
         key = self.hw.CryptAkdf(self.DP, label, ctx)
         return key.public_key()
 
@@ -179,11 +193,12 @@ class MARS_RoT:
         assert self.locked()
         snapshot = self.CryptSnapshot( regsel, nonce )
         AK = self.CryptXkdf(self.DP, b'R', ctx)
-        if (self.hw.CryptAkdf):
-            print('AK =', AK.public_key().export_key(format='PEM'))
-            #print('AKpub', pem)
-        else:
-            print('AK =', AK.hex())
+        if self.debug:
+            if (self.hw.CryptAkdf):
+                print('AK =', AK.public_key().export_key(format='PEM'))
+                #print('AKpub', pem)
+            else:
+                print('AK =', AK.hex())
         return self.hw.CryptSign(AK, snapshot)
 
     def Sign(self, ctx, dig):
@@ -229,7 +244,7 @@ if __name__ == '__main__':
     mars.Lock()
     mars.PcrExtend(0, dig)
     dig = mars.RegRead(0)
-    print('PCR 0 ', dig.hex())
+    print('REG 0 ', dig.hex())
 
     mars.SequenceEvent(1)
     mars.SequenceUpdate(b'this is a ')
@@ -266,6 +281,11 @@ if __name__ == '__main__':
     mars.DpDerive(0, None)
     cdi = mars.Derive(1, b'CompoundDeviceID')
     print('CDI1', cdi.hex())
+
+    print('TSR test')
+    sig = mars.Quote(1<<4, nonce, b'')
+    mars.dump()
+    print('TSR =', mars.RegRead(4).hex())
 
     # IDevID tests
     print('IDevID signature test')
