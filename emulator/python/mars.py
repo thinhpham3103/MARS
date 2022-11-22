@@ -157,6 +157,7 @@ class MARS_RoT:
     def PcrExtend(self, i, dig):
         assert self.locked()
         assert i >= 0 and i < self.npcr
+        assert len(dig) == self.hw.len_digest
         self.REG[i] = self.hw.CryptHash(self.REG[i] + dig)
 
     def RegRead(self, i):
