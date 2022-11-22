@@ -85,7 +85,7 @@ she_hctx_t hctx;
     SHE_hash_update(&hctx, "\x01\x01", 2);
     SHE_hash_update(&hctx, &label, 1);
     SHE_hash_update(&hctx, ctx, ctxlen);
-    SHE_hash_update(&hctx, "", 1);      // addr of null byte
+    SHE_hash_update(&hctx, "", 1);
     SHE_hash_fini(&hctx, key);
 }
 
@@ -121,72 +121,70 @@ uint8_t EkM[16];
         }
 }
 
+// msg is padded in-place
+// returns size of padded msg
+static size_t pad(uint8_t * msg, size_t n, size_t total)
+{
+size_t i, r, z;
+    if (!total)
+        total = n;
+    r = n & 0xf;                    // remainder bytes in last block of msg
+    z = (r<=10 ? 10 : 26) - r;      // z = number of 0 bytes pad
+    msg += n;
+    *msg++ = 0x80;
+    memset(msg, 0, z);
+    msg += z;
+    total <<= 3;                    // total *= 8, number of bits
+    for (i=5; i-->0; )
+        *msg++ = total >> (i<<3);   // append total bits, big endian in 5 bytes
+    return n + 1 + z + 5;
+}
+
 void SHE_hash_init(she_hctx_t * hctx)
 {
     memset(&hctx->H, 0, 16);
     hctx->total = 0;
-    hctx->len = 0;
+    hctx->part_n = 0;
 }
 
 #define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 // Hash blocks from previous partial block (if any) and msg
-// Bytes from trailing incomplete block in msg are copied to blk
+// Bytes from trailing incomplete block in msg are copied to part_blk
 void SHE_hash_update(she_hctx_t * hctx, const uint8_t * msg, size_t n)
 {
 size_t pn;  // number of bytes to append to partial block
     hctx->total += n;
-    if (hctx->len)   // any bytes from partial block?
-        {               // try to fill blk from msg
-        pn = MIN(16-hctx->len, n);
-        memcpy(&hctx->blk[hctx->len], msg, pn);
-        hctx->len += pn;
+    if (hctx->part_n)   // any bytes from partial block?
+        {               // try to fill part_blk from msg
+        pn = MIN(16-hctx->part_n, n);
+        memcpy(&hctx->part_blk[hctx->part_n], msg, pn);
+        hctx->part_n += pn;
         msg += pn;
         n -= pn;
-        if (hctx->len == 16)
-            {           // blk is full, compress it
-            mp_comp(hctx->blk, 16, hctx->H);
-            hctx->len = 0;
+        if (hctx->part_n == 16)
+            {           // part_blk is full, compress it
+            mp_comp(hctx->part_blk, 16, hctx->H);
+            hctx->part_n = 0;
             }
         }
      if (n)     // additional bytes in msg
-        {       // len should be 0 at this point
+        {       // part_n should be 0 at this point
         mp_comp(msg, n, hctx->H);
         pn = n & 0xf;   // n % 16, bytes from trailing partial block
-        msg += n - pn;  // move trailing pn bytes to blk
-        hctx->len = pn;
-        memcpy(&hctx->blk, msg, pn);
+        msg += n - pn;  // move trailing pn bytes to part_blk
+        hctx->part_n = pn;
+        memcpy(&hctx->part_blk, msg, pn);
         }
 }
 
-// pad and do final compress(es), return digest
+// pad and do final compress, return digest
 void SHE_hash_fini(she_hctx_t * hctx, void *dig)
 {
-uint8_t i, len = hctx->len;
-uint8_t np = 16 - 1 - len; // # of bytes free for padding, excludes termination byte
-size_t bits = hctx->total << 3; // total * 8
-
-    // add termination bit in 1 byte
-    // always room for 1 byte - otherwise wouldn't be partial
-    hctx->blk[len++] = 0x80;
-
-    // If no room for 5-byte length, just 0 pad and compress
-    if (np < 5) {
-        memset(&hctx->blk[len], 0, np);
-        mp_comp(hctx->blk, 16, hctx->H);
-        len = 0;
-        np = 16;
-    }
-
-    // 0 pad, append length, compress
-    memset(&hctx->blk[len], 0, np-5);
-    for (i=5; i-->0; )      // i = 4..0
-        hctx->blk[15-i] = bits >> (i<<3);   // append total bits, big endian in 5 bytes
-    mp_comp(hctx->blk, 16, hctx->H);
-
+    hctx->part_n = pad(hctx->part_blk, hctx->part_n, hctx->total);
+    mp_comp(hctx->part_blk, hctx->part_n, hctx->H);
     memcpy(dig, hctx->H, sizeof(hctx->H));
 }
-
 
 void CryptHashInit(profile_shc_t *hctx)
 {

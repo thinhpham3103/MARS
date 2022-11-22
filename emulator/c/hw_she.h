@@ -24,9 +24,9 @@
 // hctx is Hash ConTeXt
 typedef struct {
     size_t   total;          // total # of source bytes hashed
-    uint16_t part_n;         // number of bytes in partial block
-    uint8_t  part_blk[2*PROFILE_LEN_DIGEST];   // includes room for extra block when padding
-    uint8_t  H[PROFILE_LEN_DIGEST];          // running digest
+    uint16_t len;            // number of bytes in partial block
+    uint8_t  blk[PROFILE_LEN_DIGEST];   // partial block
+    uint8_t  H[PROFILE_LEN_DIGEST];     // running digest
 } she_hctx_t;
 
 typedef she_hctx_t profile_shc_t;   // for MARS' Sequenced Hash Context
