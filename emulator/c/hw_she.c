@@ -47,7 +47,6 @@ static void xba(uint8_t * x, const uint8_t *y, size_t n)
 }
 
 // Simplified CMAC algorithm for a single block.
-// void SHE_cmac1(uint8_t *mac, const uint8_t *key, const uint8_t *blk)
 void CryptSign(void *mac, const void *key, const void *blk)
 {
 struct AES_ctx ctx;
@@ -62,7 +61,6 @@ struct AES_ctx ctx;
 }
 
 
-//bool SHE_verify(const void *key, const void *dig, const void *sig)
 bool CryptVerify(const void *key, const void *dig, const void *sig)
 {
 uint8_t mac[16];
@@ -70,7 +68,6 @@ uint8_t mac[16];
     return memcmp(mac, sig, 16) == 0;
 }
 
-//void SHE_kdf(void * key, const void * parent, char label, const void * ctx, uint16_t ctxlen)
 void CryptSkdf(void * key, const void * parent, char label, const void * ctx, uint16_t ctxlen)
 {
 she_hctx_t hctx;
@@ -110,7 +107,6 @@ uint8_t EkM[16];
         }
 }
 
-// void SHE_hash_init(she_hctx_t * hctx)
 void CryptHashInit(profile_shc_t *hctx)
 {
     memset(&hctx->H, 0, 16);
@@ -122,7 +118,6 @@ void CryptHashInit(profile_shc_t *hctx)
 
 // Hash blocks from previous partial block (if any) and msg
 // Bytes from trailing incomplete block in msg are copied to blk
-//void SHE_hash_update(she_hctx_t * hctx, const uint8_t * msg, size_t n)
 void CryptHashUpdate(profile_shc_t *hctx, const void * msg, size_t n)
 {
 size_t pn;  // number of bytes to append to partial block
@@ -151,7 +146,6 @@ size_t pn;  // number of bytes to append to partial block
 }
 
 // pad and do final compress(es), return digest
-//void SHE_hash_fini(she_hctx_t * hctx, void *dig)
 void CryptHashFinal(profile_shc_t *hctx, void *dig)
 {
 uint8_t i, len = hctx->len;
@@ -179,27 +173,9 @@ size_t bits = hctx->total << 3; // total * 8
     memcpy(dig, hctx->H, sizeof(hctx->H));
 }
 
-/*
-
-void CryptHashInit(profile_shc_t *hctx)
-{
-    SHE_hash_init(hctx);
-}
-
-void CryptHashUpdate(profile_shc_t *hctx, const void * msg, size_t n)
-{
-    SHE_hash_update(hctx, msg, n);
-}
-
-void CryptHashFinal(profile_shc_t *hctx, void *dig)
-{
-    SHE_hash_fini(hctx, dig);
-}
-*/
 
 // These tests are from the AUTOSAR SHE spec, 4.13 Examples and Test Vectors
 // See https://www.autosar.org/fileadmin/user_upload/standards/foundation/20-11/AUTOSAR_TR_SecureHardwareExtensions.pdf
-// bool SHE_selftest(bool fullTest)
 bool CryptSelfTest(bool fullTest)
 {
 size_t i;
@@ -228,10 +204,3 @@ uint8_t exp2[16] =  { 0x11, 0x8a, 0x46, 0x44, 0x7a, 0x77, 0x0d, 0x87,
 
     return true;
 }
-
-/*
-bool CryptSelfTest(bool fullTest)
-{
-    return SHE_selftest(fullTest);
-}
-*/
